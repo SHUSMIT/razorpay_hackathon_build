@@ -386,8 +386,35 @@ class RiskService:
                       "direction": "increases risk" if contribs[i] > 0
                                    else "decreases risk"}
             factor.update(self.context.describe(col, value))
+            self._note_disagreement(factor)
             out.append(factor)
         return out
+
+    @staticmethod
+    def _note_disagreement(factor: dict) -> None:
+        """Flag when the local attribution and the group average point apart.
+
+        A SHAP value is a LOCAL attribution for one transaction; a base rate is
+        a MARGINAL average over a group. They can legitimately disagree -- chip
+        transactions are low-risk on average, yet chip can still raise the score
+        for a particular combination of amount, category and time.
+
+        Left unexplained this reads as a contradiction ("increases risk" beside
+        "0.06% of these were fraud") and a reviewer stops trusting the whole
+        panel. So we say which is which rather than hiding one of them.
+        """
+        lift = factor.get("lift")
+        if lift is None:
+            return
+        raises = factor.get("direction") == "increases risk"
+        if raises and lift < 1.0:
+            factor["evidence"] += (" — note: this group is not unusually risky "
+                                   "on its own; the model raised the score on "
+                                   "how it combines with the other details")
+        elif not raises and lift > 1.5:
+            factor["evidence"] += (" — note: this group is risky on average, "
+                                   "but for this transaction the model treated "
+                                   "it as reassuring")
 
     def band(self, score: float) -> tuple[Decision, str]:
         if score >= self.block_threshold:

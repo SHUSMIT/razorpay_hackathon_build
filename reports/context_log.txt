@@ -1,0 +1,8 @@
+[context] reference = 7,299,780 legitimate TRAIN rows; overall fraud rate 0.1435%
+[context] use_chip: highest-risk levels -> Online Transaction 1.02%, Chip Transaction 0.03%, Swipe Transaction 0.03%
+[context] mcc_category: highest-risk levels -> Cruise Lines 63.89%, Miscellaneous Fabricated Metal Products 11.39%, Electronics Stores 10.30%
+[context] card_brand: highest-risk levels -> Discover 0.19%, Amex 0.16%, Mastercard 0.15%
+[context] card_type: highest-risk levels -> Debit (Prepaid) 0.23%, Credit 0.15%, Debit 0.13%
+[context] error_kind: highest-risk levels -> Bad CVV 4.16%, Bad Expiration 1.59%, Bad Card Number 1.37%
+[context] no validation predictions supplied -- score bands skipped
+[context] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\models\feature_context.json

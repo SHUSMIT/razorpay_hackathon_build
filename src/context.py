@@ -25,12 +25,18 @@ import pandas as pd
 
 from src.config import MODELS
 from src.data import load_split
+from src.weights import recency_weights
 from src.schema import CATEGORICAL, FEATURES, LABEL, NUMERIC, label
 
 CONTEXT_FILE = MODELS / "feature_context.json"
 QUANTILE_GRID = list(range(0, 101))
 SCORE_BAND_EDGES = [0.0, 0.001, 0.005, 0.02, 0.05, 0.10, 0.25, 0.50, 1.01]
 MIN_CATEGORY_SUPPORT = 200
+
+# Yes/no features. A percentile is meaningless for these -- "higher than 100%
+# of legitimate transactions" is not a sentence a reviewer can use -- so they
+# get a fraud rate like a category instead.
+BINARY = ("is_online", "is_night", "has_error", "has_chip")
 
 
 def format_value(name: str, value) -> str:
@@ -93,8 +99,9 @@ class FeatureContext:
             out["evidence"] = f"{friendly}: not provided"
             return out
 
-        if name in CATEGORICAL:
-            stats = self.category_rates.get(name, {}).get(str(value))
+        if name in CATEGORICAL or name in BINARY:
+            key = shown if name in BINARY else str(value)
+            stats = self.category_rates.get(name, {}).get(key)
             if not stats:
                 out["evidence"] = f"{friendly}: {shown} (no reference data)"
                 return out
@@ -126,6 +133,27 @@ class FeatureContext:
 
 
 # ------------------------------------------------------------------ build
+def _shipped_half_life() -> int:
+    """The recency half-life the served model was actually trained with."""
+    from src.config import SERVING_CONFIG
+
+    try:
+        shipped = json.loads(SERVING_CONFIG.read_text(encoding="utf-8")).get(
+            "shipped_model")
+        names = (["xgboost", "catboost", "histgb"] if shipped == "ensemble"
+                 else [shipped])
+        for n in names:
+            path = MODELS / f"best_params_{n}.json"
+            if path.exists():
+                hl = json.loads(path.read_text(encoding="utf-8"))[
+                    "best_params"].get("recency_half_life_days")
+                if hl:
+                    return int(hl)
+    except Exception:  # noqa: BLE001 - context must build without a config
+        pass
+    return 0
+
+
 def build(val_scores: np.ndarray | None = None,
           val_labels: np.ndarray | None = None) -> dict:
     """Learn the reference distributions from TRAIN only.
@@ -135,9 +163,22 @@ def build(val_scores: np.ndarray | None = None,
     Validation is genuinely out-of-sample here -- models are fit on train alone
     and validation is used only for early stopping and blend weights.
     """
-    train = load_split("train", columns=FEATURES + [LABEL])
+    train = load_split("train", columns=FEATURES + [LABEL, "date"])
     y = train[LABEL].to_numpy()
-    overall = float(y.mean())
+
+    # The base rates a reviewer is shown MUST come from the same regime the
+    # model was fitted on. The model is recency-weighted, so unweighted
+    # whole-history rates actively contradict it: chip transactions look
+    # low-risk across 2010-2018, while the model -- correctly, for the recent
+    # period -- treats them as the dominant attack. Showing a reviewer "0.03%
+    # of these were fraud" next to "this increased risk" destroys their trust
+    # in the explanation, and the explanation is the point.
+    half_life = _shipped_half_life()
+    w = recency_weights(train["date"], half_life)
+    if half_life:
+        print(f"[context] base rates weighted to match the model's "
+              f"{half_life}-day recency half-life")
+    overall = float(np.average(y, weights=w))
     legit = train[train[LABEL] == 0]
     print(f"[context] reference = {len(legit):,} legitimate TRAIN rows; "
           f"overall fraud rate {overall:.4%}")
@@ -150,17 +191,27 @@ def build(val_scores: np.ndarray | None = None,
             knots[c] = np.percentile(col, QUANTILE_GRID).round(8).tolist()
 
     category_rates: dict[str, dict] = {}
-    for c in CATEGORICAL:
-        grp = train.groupby(c, observed=True)[LABEL].agg(["mean", "size"])
-        grp = grp[grp["size"] >= MIN_CATEGORY_SUPPORT]
+    frame = train[list(CATEGORICAL)].copy()
+    for c in BINARY:
+        frame[c] = np.where(train[c].to_numpy(dtype="float64") >= 0.5, "yes", "no")
+
+    for c in list(CATEGORICAL) + list(BINARY):
+        g = pd.DataFrame({"level": frame[c].astype("object"), "y": y, "w": w})
+        agg = g.groupby("level", observed=True).apply(
+            lambda d: pd.Series({
+                "fraud_rate": float(np.average(d["y"], weights=d["w"]))
+                if d["w"].sum() > 0 else float(d["y"].mean()),
+                "size": int(len(d)),
+            }), include_groups=False)
+        agg = agg[agg["size"] >= MIN_CATEGORY_SUPPORT]
         category_rates[c] = {
-            str(k): {"fraud_rate": float(r["mean"]), "n": int(r["size"])}
-            for k, r in grp.iterrows()
+            str(k): {"fraud_rate": float(r["fraud_rate"]), "n": int(r["size"])}
+            for k, r in agg.iterrows()
         }
-        if len(grp):
-            top = grp.sort_values("mean", ascending=False).head(3)
+        if len(agg):
+            top = agg.sort_values("fraud_rate", ascending=False).head(3)
             print(f"[context] {c}: highest-risk levels -> " + ", ".join(
-                f"{k} {r['mean']:.2%}" for k, r in top.iterrows()))
+                f"{k} {r['fraud_rate']:.2%}" for k, r in top.iterrows()))
 
     payload = {
         "source": "train split",
@@ -197,5 +248,46 @@ def _score_bands(scores, labels) -> dict:
     return {"source": "validation split (out-of-sample)", "bands": bands}
 
 
+def shipped_val_scores():
+    """Validation scores from the model that is actually being served.
+
+    Reproduces the serving path exactly -- same blend weights, same calibrator
+    -- so the base rates a reviewer is shown correspond to the numbers the API
+    actually emits. Uses the checkpointed validation predictions, so this costs
+    nothing to recompute.
+    """
+    import numpy as np
+
+    from src.calibration import Calibration
+    from src.config import SERVING_CONFIG, VAL_PRED_DIR
+    from src.data import load_categories, xy
+    from src.models import ensemble_predict
+
+    if not SERVING_CONFIG.exists():
+        return None, None
+    cfg = json.loads(SERVING_CONFIG.read_text(encoding="utf-8"))
+    shipped = cfg.get("shipped_model")
+    weights = cfg.get("ensemble_weights", {}) or {}
+
+    preds = {p.stem: np.load(p) for p in sorted(VAL_PRED_DIR.glob("*.npy"))}
+    if not preds:
+        return None, None
+    if shipped == "ensemble":
+        members = {k: v for k, v in preds.items() if weights.get(k, 0) > 0}
+        scores = ensemble_predict(members or preds, weights)
+    elif shipped in preds:
+        scores = preds[shipped]
+    else:
+        return None, None
+
+    scores = Calibration.load().predict(scores)
+    _, y = xy("val", load_categories())
+    return scores, y.to_numpy()
+
+
 if __name__ == "__main__":
-    build()
+    s, y = shipped_val_scores()
+    if s is None:
+        print("[context] no serving config or validation predictions found -- "
+              "run `python run.py assess` first; score bands will be skipped")
+    build(s, y)

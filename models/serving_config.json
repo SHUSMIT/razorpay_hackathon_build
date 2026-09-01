@@ -1,0 +1,14 @@
+{
+  "shipped_model": "ensemble",
+  "ensemble_weights": {
+    "xgboost": 0.9,
+    "catboost": 0.1,
+    "histgb": 0.0
+  },
+  "block_threshold": 0.64,
+  "review_threshold": 0.243038,
+  "fp_cost": 50.0,
+  "model_version": "frm-1.0.0",
+  "expected_precision_at_block": 0.7702044790652386,
+  "expected_recall_at_block": 0.5613910574875799
+}
