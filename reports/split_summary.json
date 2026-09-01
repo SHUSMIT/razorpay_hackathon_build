@@ -31,6 +31,6 @@
       "end": "2019-10-31 23:57:00"
     }
   },
-  "n_features": 15,
+  "n_features": 22,
   "split_strategy": "time-based 70/15/15, aggregates fitted on train only"
 }

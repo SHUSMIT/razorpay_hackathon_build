@@ -6,16 +6,17 @@
     scanned 10,000,000 rows ...
     scanned 12,000,000 rows ...
     scanned 13,305,915 rows ...
-[prep] kept 8,914,963 labelled of 13,305,915 transactions in 97s
+[prep] kept 8,914,963 labelled of 13,305,915 transactions in 104s
 [prep] joined cards (6,146) and users (2,000); 108 merchant categories
+[prep] velocity features built over 8,914,963 rows (4,070 cards); windows exclude the current row
 [prep] time-based split (evaluation always looks FORWARD):
     train   7,310,269 rows  (82.0%)  2010-01-01 -> 2018-02-11  fraud 10,489 (0.143%)
     val       713,197 rows  ( 8.0%)  2018-02-11 -> 2018-11-17  fraud 1,243 (0.174%)
     test      802,346 rows  ( 9.0%)  2018-11-17 -> 2019-09-26  fraud 1,409 (0.176%)
     demo       89,151 rows  ( 1.0%)  2019-09-26 -> 2019-10-31  fraud   191 (0.214%)
 [prep] LEAKAGE CHECK PASSED: 8,914,963 unique ids, no id in two splits, splits strictly ordered in time
-[prep] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\data\processed\train.parquet  (7310269, 18)
-[prep] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\data\processed\val.parquet  (713197, 18)
-[prep] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\data\processed\test.parquet  (802346, 18)
-[prep] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\data\processed\demo.parquet  (89151, 18)
+[prep] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\data\processed\train.parquet  (7310269, 25)
+[prep] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\data\processed\val.parquet  (713197, 25)
+[prep] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\data\processed\test.parquet  (802346, 25)
+[prep] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\data\processed\demo.parquet  (89151, 25)
 [prep] wrote reports/split_summary.json

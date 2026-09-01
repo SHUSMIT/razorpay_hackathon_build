@@ -156,3 +156,68 @@ still scored on the **full** validation split for the same reason.
   real payment traffic, and findings 2 and 3 are both artefacts of the
   generator rather than facts about the world. The *method* transfers; these
   particular numbers do not.
+
+---
+
+## 5. Velocity features do not help here, and the data says why
+
+Every production fraud system leans on velocity: how many purchases this card
+made in the last hour, how far this amount sits from its recent norm, whether
+the merchant category is one it has never touched. This pipeline computes eight
+of them causally (`src/prepare.py::add_velocity`, every window backward-looking
+and excluding the row being scored).
+
+They were then measured, with identical hyper-parameters, on validation:
+
+| Feature set | val PR-AUC |
+|---|---|
+| 14 features, no velocity | **69.99%** |
+| + `new_mcc_for_card` | 69.45% |
+| + `new_mcc_for_card`, `amount_vs_card_recent` | 69.39% |
+| all 8 velocity features | 69.09% |
+
+Every addition made it slightly worse. That is not a bug, and the reason is
+plain in the raw comparison of fraud against legitimate rows:
+
+| Velocity feature | Fraud | Legitimate | Ratio |
+|---|---|---|---|
+| transactions in the prior hour | 0.18 | 0.18 | **0.99** |
+| transactions in the prior 7 days | 7.28 | 8.43 | **0.86** |
+| hours since the card was last used | 27.5 | 32.0 | 0.86 |
+| amount vs the card's recent average | 2.60 | 1.69 | 1.54 |
+| first use of this merchant category | 0.19 | 0.01 | 21.4 |
+
+**A compromised card in the real world goes on a spree. Here it does not.**
+Fraudulent cards are no busier than legitimate ones in the hour before the
+event, and are *less* active over a week. This dataset's generator does not
+simulate card takeover, so six of the eight features are noise the model has to
+work around.
+
+The one feature with genuine standalone signal, `new_mcc_for_card` (4.6x lift
+alone), still does not improve the model — its information is already carried
+by `mcc_category` and `is_online`.
+
+**The features remain computed and stored in the parquet files but are excluded
+from `FEATURES`.** On real payment traffic they would be among the most
+valuable signals available, and the pipeline is built to move datasets. Here,
+the honest thing is to measure them, report that they do not help, and not ship
+complexity that buys nothing.
+
+### What this says about pushing the score higher
+
+The obvious levers were tried and measured:
+
+- **More models / deeper stacking.** HistGB and XGBoost already agree at
+  rho = 0.935 -- they are near-duplicates. The three-family blend measured
+  -0.00% against the best single model, 95% CI [-0.51%, +0.47%]. More
+  correlated members cannot help.
+- **PCA.** Trees split on axis-aligned thresholds, so rotating the feature
+  space makes splits worse, not better -- and it would destroy the named-feature
+  explanations that are the point of this service.
+- **Velocity engineering.** Measured above. No.
+
+At 68.08% PR-AUC on a 0.176% base rate -- a 388x lift, catching 791 of 1,409
+frauds while touching 236 legitimate customers out of 802,346 -- the model is
+close to what these 14 features support. The remaining headroom is in the
+DATA (richer signals a real processor has: device fingerprint, IP, session
+behaviour, merchant history), not in more machinery on top of these columns.

@@ -115,6 +115,29 @@ NUMERIC: list[str] = [
     "is_online", "has_error", "has_chip",
 ]
 
+# Velocity features ARE computed by src/prepare.py and stored in the parquet
+# files, but they are deliberately NOT used. Measured on validation with
+# identical hyper-parameters:
+#
+#     14 features (no velocity)              69.99%
+#     + new_mcc_for_card                     69.45%
+#     + new_mcc + amount_vs_card_recent      69.39%
+#     all 8 velocity features                69.09%
+#
+# Every addition made it slightly worse. The reason is visible in the data:
+# real compromised cards show BURSTS, but here fraud cards are no busier than
+# legitimate ones (0.18 vs 0.18 transactions in the prior hour; 7.3 vs 8.4 over
+# a week -- fraud cards are actually less active). This generator does not
+# simulate card takeover, so the features are noise the model must fight.
+#
+# They stay computed because on real payment traffic they are among the most
+# valuable signals available, and this pipeline is meant to move datasets.
+VELOCITY_AVAILABLE: list[str] = [
+    "card_txns_1h", "card_txns_24h", "card_txns_7d",
+    "card_amount_24h", "card_mean_amount_7d",
+    "hours_since_card_txn", "amount_vs_card_recent", "new_mcc_for_card",
+]
+
 FEATURES: list[str] = NUMERIC + CATEGORICAL
 LABEL = "is_fraud"
 
@@ -158,6 +181,14 @@ LABELS: dict[str, str] = {
     "amount_to_income": "amount as a share of yearly income",
     "amount_vs_card_median": "amount vs this card's usual spend",
     "amount_vs_mcc_median": "amount vs typical spend in this merchant category",
+    "card_txns_1h": "purchases on this card in the last hour",
+    "card_txns_24h": "purchases on this card in the last 24 hours",
+    "card_txns_7d": "purchases on this card in the last 7 days",
+    "card_amount_24h": "amount spent on this card in the last 24 hours",
+    "card_mean_amount_7d": "this card's average purchase over the last 7 days",
+    "hours_since_card_txn": "hours since this card was last used",
+    "amount_vs_card_recent": "amount vs what this card usually spends",
+    "new_mcc_for_card": "first time this card has used this merchant category",
 }
 
 

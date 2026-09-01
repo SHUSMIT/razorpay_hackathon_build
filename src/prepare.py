@@ -16,10 +16,19 @@ from a hackathon result:
      so every evaluation looks forward, and the demo set is the most recent
      traffic in the dataset.
 
-  2. EVERY AGGREGATE IS COMPUTED ON THE TRAIN PERIOD ONLY. "This amount vs the
-     card's usual spend" is a leak if the median is computed over all time,
-     because it embeds the future. The medians are learned on train and then
-     applied unchanged to the later splits, exactly as in production.
+  2. AGGREGATES NEVER SEE THE FUTURE. There are two kinds here and they are
+     protected differently:
+
+     STATIC aggregates (the median spend per merchant category) are fitted on
+     the TRAIN PERIOD ONLY and then applied unchanged to the later splits.
+     Computing them over all time would embed the future in every row.
+
+     ROLLING aggregates (this card's purchases in the last hour/day/week) are
+     computed over the whole timeline, but every window is backward-looking
+     (`closed="left"`, excluding the row being scored). That is not a leak: a
+     transaction in the test period is entitled to know what its card did last
+     week, because in production it would. It simply must never see anything
+     that happened after itself.
 """
 from __future__ import annotations
 
@@ -130,6 +139,90 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
     # encode it as a flag rather than imputing a fake ZIP.
     df["is_online"] = df["zip"].isna().astype("int8")
     df["merchant_state"] = df["merchant_state"].fillna("ONLINE")
+
+    # Magnitude is computed here rather than in build_features because the
+    # velocity windows run before the split and are denominated in it.
+    df["abs_amount"] = df["amount"].abs().astype("float32")
+    return df
+
+
+def add_velocity(df: pd.DataFrame) -> pd.DataFrame:
+    """Per-card behavioural history, computed causally.
+
+    A transaction on its own says little. What a fraud analyst actually looks
+    at is the CHANGE: this card normally spends 40 euros twice a week, and it
+    has just made its fifth purchase in an hour. None of that is visible to a
+    model that sees each row in isolation, and until now this one did.
+
+    Two rules make these safe:
+
+      1. EVERY WINDOW EXCLUDES THE CURRENT ROW (`closed="left"`). A count that
+         includes itself is a constant 1 offset at best; at worst, on a sum, it
+         leaks the very amount being scored.
+      2. THEY ARE COMPUTED BEFORE THE TIME SPLIT, over the whole timeline. That
+         is not leakage -- it is the opposite. A transaction in the test period
+         is allowed to know what that card did last week, because in production
+         it would. What it must never see is anything AFTER itself, which
+         `closed="left"` on a time-ordered frame guarantees.
+
+    Note these are behavioural, not identity: they describe what the card just
+    did, not which card it is. That is the distinction that killed the static
+    per-card median (see docs/FINDINGS.md) while keeping these.
+    """
+    df = df.sort_values(["card_id", "date"], kind="mergesort")
+    g = df.set_index("date").groupby("card_id", observed=True)
+    out = {}
+
+    for window, tag in (("1h", "1h"), ("24h", "24h"), ("7d", "7d")):
+        out[f"card_txns_{tag}"] = (
+            g["abs_amount"].rolling(window, closed="left").count()
+            .reset_index(level=0, drop=True))
+    out["card_amount_24h"] = (
+        g["abs_amount"].rolling("24h", closed="left").sum()
+        .reset_index(level=0, drop=True))
+    out["card_mean_amount_7d"] = (
+        g["abs_amount"].rolling("7d", closed="left").mean()
+        .reset_index(level=0, drop=True))
+
+    for k, v in out.items():
+        df[k] = v.to_numpy()
+
+    # An EMPTY window is zero, not unknown. Pandas returns NaN when a rolling
+    # window contains no rows, but "this card made no purchases in the last
+    # hour" is a fact, and a very different one from "I have never seen this
+    # card". Leaving both as NaN makes a quiet regular customer look identical
+    # to a brand-new one and throws away the signal these features exist for.
+    # Counts and sums therefore become 0; the genuinely-unknown case is carried
+    # by hours_since_card_txn (NaN on a card's first ever transaction).
+    for c in ("card_txns_1h", "card_txns_24h", "card_txns_7d", "card_amount_24h"):
+        df[c] = df[c].fillna(0.0)
+    # The MEAN of an empty window stays NaN -- there is no honest value for the
+    # average of nothing, and the model handles NaN natively.
+
+    # Time since the card's previous transaction. First-ever transaction on a
+    # card has no predecessor: left as NaN rather than a fabricated zero, which
+    # would read as "one second ago" -- the opposite of the truth.
+    prev = df.groupby("card_id", observed=True)["date"].shift(1)
+    df["hours_since_card_txn"] = (
+        (df["date"] - prev).dt.total_seconds() / 3600.0).astype("float32")
+
+    # How this amount compares to the card's own recent behaviour. This is the
+    # "unusual for THIS customer" signal, and it generalises to cards never
+    # seen because it is relative to their own history, not to an identity.
+    denom = df["card_mean_amount_7d"].replace(0, np.nan)
+    df["amount_vs_card_recent"] = (df["abs_amount"] / denom).astype("float32")
+
+    # First time this card has transacted in this merchant category.
+    seen_before = df.groupby(["card_id", "mcc_category"], observed=True).cumcount()
+    df["new_mcc_for_card"] = (seen_before == 0).astype("int8")
+
+    for c in ("card_txns_1h", "card_txns_24h", "card_txns_7d",
+              "card_amount_24h", "card_mean_amount_7d"):
+        df[c] = df[c].astype("float32")
+
+    df = df.sort_values("date", kind="mergesort").reset_index(drop=True)
+    print(f"[prep] velocity features built over {len(df):,} rows "
+          f"({df['card_id'].nunique():,} cards); windows exclude the current row")
     return df
 
 
@@ -229,6 +322,11 @@ def main() -> None:
     df[LABEL] = df["id"].map(labels).astype("int8")
     df = join_context(df)
     df = clean(df)
+    # Velocity is computed over the WHOLE timeline, before the split. That is
+    # not leakage: each window looks only backwards (closed="left"), so a test
+    # transaction may use its card's earlier history exactly as production
+    # would, and can never see anything after itself.
+    df = add_velocity(df)
 
     parts = time_split(df)
     del df
