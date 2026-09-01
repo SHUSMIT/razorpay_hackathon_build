@@ -1,0 +1,24 @@
+# Raw + processed data: 150MB, regenerated in ~1 min by `python run.py data`.
+# The dataset is fetched from the Hugging Face Hub, so there is no reason to
+# vendor it -- but a small labelled sample IS committed so the repo demos
+# without a download.
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Model artefacts (~1.1MB) and reports (~700KB) ARE committed on purpose:
+# they are the evidence a reviewer reads, and they let a fresh clone start the
+# API and the UI without first sitting through a 20-minute Optuna run.
+# Only the two regenerable, noisy artefacts are excluded:
+reports/audit_log.jsonl
+reports/optuna_study.db
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store

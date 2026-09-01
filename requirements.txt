@@ -1,0 +1,21 @@
+# Pinned to the versions this project was built and verified against.
+pandas==2.3.3
+numpy==2.5.1
+scikit-learn==1.9.0
+xgboost==3.4.1
+optuna==4.9.0
+matplotlib==3.11.1
+pyarrow==22.0.0
+huggingface_hub==1.24.0
+fastapi==0.139.2
+uvicorn==0.51.0
+pydantic==2.12.4
+streamlit==1.60.0
+requests==2.34.2
+pytest==9.1.1
+httpx==0.28.1
+
+# Optional. Explanations use XGBoost's built-in TreeSHAP (same algorithm, no
+# numba dependency), so the service runs without this. Installing it only adds
+# the beeswarm summary plot.
+# shap==0.48.0

@@ -1,0 +1,35 @@
+{
+  "xgboost": {
+    "best_val_pr_auc": 0.007215301991073105,
+    "best_params": {
+      "max_depth": 3,
+      "learning_rate": 0.23467875319825232,
+      "subsample": 0.7035119926400067,
+      "colsample_bytree": 0.7975133706123891,
+      "min_child_weight": 97,
+      "reg_lambda": 7.864337097489291,
+      "gamma": 0.0005699231800614208
+    }
+  },
+  "catboost": {
+    "best_val_pr_auc": 0.05573414460352294,
+    "best_params": {
+      "depth": 8,
+      "learning_rate": 0.09514502093634948,
+      "l2_leaf_reg": 2.5904105433100257,
+      "random_strength": 0.010393836202002855,
+      "bagging_temperature": 0.7630578764280623,
+      "iterations": 555
+    }
+  },
+  "histgb": {
+    "best_val_pr_auc": 0.0038361934142623036,
+    "best_params": {
+      "learning_rate": 0.025632617162773208,
+      "max_leaf_nodes": 8,
+      "min_samples_leaf": 130,
+      "l2_regularization": 8.067646534930116,
+      "max_iter": 248
+    }
+  }
+}

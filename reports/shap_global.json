@@ -1,0 +1,206 @@
+{
+  "model_version_file": "C:\\Users\\shusm\\Downloads\\razorpya\\fraud-risk-manager\\models\\tuned.json",
+  "bias_log_odds": 0.8835694789886475,
+  "n_sample": 2000,
+  "additivity_max_error": 7.62939453125e-06,
+  "ranking": [
+    {
+      "feature": "V14",
+      "label": "anonymised behaviour component V14",
+      "mean_abs_shap": 2.183419704437256,
+      "mean_shap": -1.9139198064804077
+    },
+    {
+      "feature": "V4",
+      "label": "anonymised behaviour component V4",
+      "mean_abs_shap": 1.601861596107483,
+      "mean_shap": -1.3953838348388672
+    },
+    {
+      "feature": "V10",
+      "label": "anonymised behaviour component V10",
+      "mean_abs_shap": 1.055106282234192,
+      "mean_shap": -0.8935902118682861
+    },
+    {
+      "feature": "V12",
+      "label": "anonymised behaviour component V12",
+      "mean_abs_shap": 1.0384471416473389,
+      "mean_shap": -0.9127869606018066
+    },
+    {
+      "feature": "V3",
+      "label": "anonymised behaviour component V3",
+      "mean_abs_shap": 0.8017939329147339,
+      "mean_shap": -0.7664750218391418
+    },
+    {
+      "feature": "V11",
+      "label": "anonymised behaviour component V11",
+      "mean_abs_shap": 0.6707319617271423,
+      "mean_shap": -0.6000310182571411
+    },
+    {
+      "feature": "V17",
+      "label": "anonymised behaviour component V17",
+      "mean_abs_shap": 0.5906491875648499,
+      "mean_shap": -0.5064293742179871
+    },
+    {
+      "feature": "V16",
+      "label": "anonymised behaviour component V16",
+      "mean_abs_shap": 0.422777384519577,
+      "mean_shap": -0.3853170573711395
+    },
+    {
+      "feature": "Amount",
+      "label": "transaction amount",
+      "mean_abs_shap": 0.3715018630027771,
+      "mean_shap": -0.31398338079452515
+    },
+    {
+      "feature": "V8",
+      "label": "anonymised behaviour component V8",
+      "mean_abs_shap": 0.3518257737159729,
+      "mean_shap": -0.2595396637916565
+    },
+    {
+      "feature": "V19",
+      "label": "anonymised behaviour component V19",
+      "mean_abs_shap": 0.32582709193229675,
+      "mean_shap": -0.25641900300979614
+    },
+    {
+      "feature": "V7",
+      "label": "anonymised behaviour component V7",
+      "mean_abs_shap": 0.31683966517448425,
+      "mean_shap": -0.26059451699256897
+    },
+    {
+      "feature": "hour_sin",
+      "label": "time of day (cyclical)",
+      "mean_abs_shap": 0.314376562833786,
+      "mean_shap": -0.22812820971012115
+    },
+    {
+      "feature": "V15",
+      "label": "anonymised behaviour component V15",
+      "mean_abs_shap": 0.3112325072288513,
+      "mean_shap": -0.25639206171035767
+    },
+    {
+      "feature": "V13",
+      "label": "anonymised behaviour component V13",
+      "mean_abs_shap": 0.2901749014854431,
+      "mean_shap": -0.25467583537101746
+    },
+    {
+      "feature": "log_amount",
+      "label": "transaction amount (log scale)",
+      "mean_abs_shap": 0.2690335810184479,
+      "mean_shap": -0.22913366556167603
+    },
+    {
+      "feature": "V1",
+      "label": "anonymised behaviour component V1",
+      "mean_abs_shap": 0.26252391934394836,
+      "mean_shap": -0.2298734337091446
+    },
+    {
+      "feature": "V26",
+      "label": "anonymised behaviour component V26",
+      "mean_abs_shap": 0.25007113814353943,
+      "mean_shap": -0.21371589601039886
+    },
+    {
+      "feature": "V18",
+      "label": "anonymised behaviour component V18",
+      "mean_abs_shap": 0.24254964292049408,
+      "mean_shap": -0.21947936713695526
+    },
+    {
+      "feature": "V23",
+      "label": "anonymised behaviour component V23",
+      "mean_abs_shap": 0.2402121126651764,
+      "mean_shap": -0.17533279955387115
+    },
+    {
+      "feature": "V22",
+      "label": "anonymised behaviour component V22",
+      "mean_abs_shap": 0.23931479454040527,
+      "mean_shap": -0.22132284939289093
+    },
+    {
+      "feature": "V20",
+      "label": "anonymised behaviour component V20",
+      "mean_abs_shap": 0.23807650804519653,
+      "mean_shap": -0.21747353672981262
+    },
+    {
+      "feature": "V5",
+      "label": "anonymised behaviour component V5",
+      "mean_abs_shap": 0.23762457072734833,
+      "mean_shap": -0.20245857536792755
+    },
+    {
+      "feature": "V25",
+      "label": "anonymised behaviour component V25",
+      "mean_abs_shap": 0.23371320962905884,
+      "mean_shap": -0.19770658016204834
+    },
+    {
+      "feature": "V6",
+      "label": "anonymised behaviour component V6",
+      "mean_abs_shap": 0.22970251739025116,
+      "mean_shap": -0.19270947575569153
+    },
+    {
+      "feature": "hour_cos",
+      "label": "time of day (cyclical)",
+      "mean_abs_shap": 0.22814884781837463,
+      "mean_shap": -0.1966647356748581
+    },
+    {
+      "feature": "V28",
+      "label": "anonymised behaviour component V28",
+      "mean_abs_shap": 0.21546509861946106,
+      "mean_shap": -0.16883985698223114
+    },
+    {
+      "feature": "hour_of_day",
+      "label": "hour of day",
+      "mean_abs_shap": 0.2118077427148819,
+      "mean_shap": -0.18129731714725494
+    },
+    {
+      "feature": "V21",
+      "label": "anonymised behaviour component V21",
+      "mean_abs_shap": 0.21008789539337158,
+      "mean_shap": -0.182786226272583
+    },
+    {
+      "feature": "V24",
+      "label": "anonymised behaviour component V24",
+      "mean_abs_shap": 0.20718032121658325,
+      "mean_shap": -0.179812490940094
+    },
+    {
+      "feature": "V9",
+      "label": "anonymised behaviour component V9",
+      "mean_abs_shap": 0.19177046418190002,
+      "mean_shap": -0.14629963040351868
+    },
+    {
+      "feature": "V2",
+      "label": "anonymised behaviour component V2",
+      "mean_abs_shap": 0.174475759267807,
+      "mean_shap": -0.1607959270477295
+    },
+    {
+      "feature": "V27",
+      "label": "anonymised behaviour component V27",
+      "mean_abs_shap": 0.16982702910900116,
+      "mean_shap": -0.1379537731409073
+    }
+  ]
+}

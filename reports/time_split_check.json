@@ -1,0 +1,9 @@
+{
+  "time_ordered_pr_auc": 0.7633252656827504,
+  "random_pr_auc": 0.9227884825129118,
+  "optimism": 0.1594632168301614,
+  "test_frauds_time": 52,
+  "test_frauds_random": 63,
+  "rounds": 160,
+  "test_fraction": 0.15
+}

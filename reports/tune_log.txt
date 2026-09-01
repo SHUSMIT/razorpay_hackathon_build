@@ -1,0 +1,3 @@
+
+>>> C:\Users\shusm\AppData\Local\Programs\Python\Python313\python.exe -m src.tune --trials 30
+
