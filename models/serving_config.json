@@ -1,8 +1,0 @@
-{
-  "model_path": "tuned.json",
-  "block_threshold": 0.09,
-  "review_threshold": 0.0284,
-  "fp_cost": 50.0,
-  "expected_precision_at_block": 0.7808219178082192,
-  "expected_recall_at_block": 0.8028169014084507
-}

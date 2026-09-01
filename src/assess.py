@@ -136,7 +136,11 @@ def main() -> None:
     results = {}
     for name, p in p_test_cal.items():
         m = core_metrics(y_test, p, 0.5)
-        m["pr_auc_ci"] = bootstrap_pr_auc(y_test, p)
+        # 500 resamples, not 2000. The interval's WIDTH is set by the number
+        # of positives (1,409 frauds), not by the resample count; 500 is ample
+        # to place the 2.5/97.5 quantiles and costs a quarter of the compute on
+        # an 800k-row split.
+        m["pr_auc_ci"] = bootstrap_pr_auc(y_test, p, n_boot=500)
         m["cost_at_selected_threshold"] = cost_at(y_test, p, a_test, t_block)
         results[name] = m
 
@@ -175,7 +179,7 @@ def main() -> None:
     cmp_block = {}
     if "ensemble" in p_test_cal and best_single != "ensemble":
         delta = paired_bootstrap_delta(y_test, p_test_cal[best_single],
-                                       p_test_cal["ensemble"])
+                                       p_test_cal["ensemble"], n_boot=500)
         cmp_block = {"best_single": best_single, **delta}
         print(f"\n[assess] ensemble vs best single ({best_single}) on test")
         print(f"    {best_single:<10} PR-AUC {pct(results[best_single]['pr_auc'])}")

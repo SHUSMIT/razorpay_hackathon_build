@@ -1,5 +1,0 @@
-[train] train (6240474, 15), 10,169 frauds (0.1630%)
-[train] val   (1337244, 15), 810 frauds
-[train]   val_fit 802,346 rows (2 frauds) -- early stopping, blend weights, calibration
-[train]   val_sel 534,898 rows (808 frauds) -- held back for threshold selection
-[train] xgboost: using tuned params (search val PR-AUC 0.0072)

@@ -17,7 +17,13 @@ import json
 import numpy as np
 import pandas as pd
 
-from src.config import MODELS, RANDOM_SEED
+from src.config import (
+    CATBOOST_MAX_CTR_COMPLEXITY,
+    CATBOOST_RAM_LIMIT,
+    MODELS,
+    N_THREADS,
+    RANDOM_SEED,
+)
 from src.data import catboost_frame, categorical_indices, categorical_mask
 
 XGB_MODEL = MODELS / "xgboost.json"
@@ -47,17 +53,24 @@ def default_xgb_params(y) -> dict:
         "reg_lambda": 1.0,
         "scale_pos_weight": scale_pos_weight(y),
         "seed": RANDOM_SEED,
-        "nthread": 4,
+        "nthread": N_THREADS,
     }
 
 
 def fit_xgboost(X, y, X_val, y_val, params: dict | None = None,
-                rounds: int = 400, early_stopping: int = 40):
+                rounds: int = 400, early_stopping: int = 40,
+                sample_weight=None):
     import xgboost as xgb
 
     params = {**default_xgb_params(y), **(params or {})}
-    params.setdefault("scale_pos_weight", scale_pos_weight(y))
-    dtr = xgb.DMatrix(X, label=y, enable_categorical=True)
+    if sample_weight is None:
+        params.setdefault("scale_pos_weight", scale_pos_weight(y))
+    else:
+        # The weight vector already carries the class correction (and the
+        # recency decay). Applying scale_pos_weight on top would count the
+        # imbalance twice.
+        params.pop("scale_pos_weight", None)
+    dtr = xgb.DMatrix(X, label=y, weight=sample_weight, enable_categorical=True)
     dva = xgb.DMatrix(X_val, label=y_val, enable_categorical=True)
     booster = xgb.train(params, dtr, num_boost_round=rounds,
                         evals=[(dva, "val")], early_stopping_rounds=early_stopping,
@@ -88,18 +101,29 @@ def default_cat_params(y) -> dict:
         "scale_pos_weight": scale_pos_weight(y),
         "verbose": False,
         "allow_writing_files": False,
-        "thread_count": 4,
+        "thread_count": N_THREADS,
+        # --- memory guards ---
+        # CatBoost is the only member that will consume whatever it is given.
+        # On a 7.6GB laptop with ~1.5GB free that is fatal, so it gets a hard
+        # ceiling and its categorical-combination depth is capped. Both cost a
+        # little accuracy and buy a run that finishes.
+        "used_ram_limit": CATBOOST_RAM_LIMIT,
+        "max_ctr_complexity": CATBOOST_MAX_CTR_COMPLEXITY,
+        "border_count": 128,
     }
 
 
 def fit_catboost(X, y, X_val, y_val, params: dict | None = None,
-                 early_stopping: int = 40):
+                 early_stopping: int = 40, sample_weight=None):
     from catboost import CatBoostClassifier, Pool
 
     params = {**default_cat_params(y), **(params or {})}
-    params.setdefault("scale_pos_weight", scale_pos_weight(y))
+    if sample_weight is None:
+        params.setdefault("scale_pos_weight", scale_pos_weight(y))
+    else:
+        params.pop("scale_pos_weight", None)
     cat_idx = categorical_indices(X)
-    tr = Pool(catboost_frame(X), y, cat_features=cat_idx)
+    tr = Pool(catboost_frame(X), y, weight=sample_weight, cat_features=cat_idx)
     va = Pool(catboost_frame(X_val), y_val, cat_features=cat_idx)
     model = CatBoostClassifier(**params)
     model.fit(tr, eval_set=va, early_stopping_rounds=early_stopping, verbose=False)
@@ -121,19 +145,23 @@ def default_hgb_params() -> dict:
         "l2_regularization": 1.0,
         "early_stopping": True,
         "n_iter_no_change": 30,
+        "max_bins": 128,
         "validation_fraction": 0.1,
         "random_state": RANDOM_SEED,
     }
 
 
-def fit_histgb(X, y, X_val=None, y_val=None, params: dict | None = None):
+def fit_histgb(X, y, X_val=None, y_val=None, params: dict | None = None,
+               sample_weight=None):
     from sklearn.ensemble import HistGradientBoostingClassifier
 
     params = {**default_hgb_params(), **(params or {})}
     model = HistGradientBoostingClassifier(
         categorical_features=categorical_mask(X), **params)
-    # Class imbalance via sample weights: the positive class is ~1 in 670.
-    w = np.where(np.asarray(y) == 1, scale_pos_weight(y), 1.0)
+    # HistGB has no scale_pos_weight, so imbalance is always expressed as
+    # sample weights. When the caller supplies a vector it already carries the
+    # class correction plus recency decay.
+    w = sample_weight if sample_weight is not None else         np.where(np.asarray(y) == 1, scale_pos_weight(y), 1.0)
     model.fit(X, y, sample_weight=w)
     return model
 
@@ -148,10 +176,12 @@ PREDICT = {"xgboost": predict_xgboost, "catboost": predict_catboost,
            "histgb": predict_histgb}
 
 
-def fit(name: str, X, y, X_val, y_val, params: dict | None = None):
+def fit(name: str, X, y, X_val, y_val, params: dict | None = None,
+        sample_weight=None):
     if name == "histgb":
-        return fit_histgb(X, y, params=params)
-    return FIT[name](X, y, X_val, y_val, params=params)
+        return fit_histgb(X, y, params=params, sample_weight=sample_weight)
+    return FIT[name](X, y, X_val, y_val, params=params,
+                     sample_weight=sample_weight)
 
 
 def predict(name: str, model, X) -> np.ndarray:

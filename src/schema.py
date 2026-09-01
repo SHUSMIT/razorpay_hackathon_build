@@ -33,6 +33,20 @@ from __future__ import annotations
 #   never saw in train. Splits learned on them do not transfer.
 #
 DROPPED: dict[str, str] = {
+    # --- degenerate shortcut: measured, not suspected ---
+    # merchant_state ALONE scored 89.4% PR-AUC on validation, higher than the
+    # full 15-feature model (86.9%), while every other feature scored <=1.8%.
+    # The reason is an artefact of how this dataset's fraud labels were made:
+    #     train  82.9% of fraud is ONLINE (1.02% rate); Haiti 97.7%; Italy 19.9%
+    #     val    97.7% of ALL fraud has merchant_state == "Italy" (91.8% rate)
+    #     test   94.9% of ALL fraud has merchant_state == "Italy" (84.3% rate)
+    # A model keeping this column is a lookup table -- "Italy means fraud" --
+    # not a fraud detector, and it would transfer to no real payment system.
+    # Removing it drops validation PR-AUC from 46.6% to 15.2% under identical
+    # settings; 15.2% on a 0.174% base rate is an 87x lift built on actual
+    # behaviour, and that is the number worth defending.
+    "merchant_state": "degenerate shortcut: 95-98% of later-period fraud sits "
+                      "in one value; alone it beats the whole model.",
     # --- identity fingerprints (2,000 users is small enough to memorise) ---
     "current_age": "identity: helps fingerprint one of only 2,000 cardholders.",
     "gender": "identity: part of the same cardholder fingerprint.",
@@ -87,7 +101,6 @@ DROPPED: dict[str, str] = {
 # so no one-hot explosion and no arbitrary ordinal encoding.
 CATEGORICAL: list[str] = [
     "use_chip",
-    "merchant_state",
     "mcc_category",
     "card_brand",
     "card_type",

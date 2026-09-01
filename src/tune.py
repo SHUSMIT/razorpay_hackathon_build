@@ -29,9 +29,10 @@ import numpy as np
 import optuna
 from sklearn.metrics import average_precision_score
 
-from src.config import MODELS, RANDOM_SEED, REPORTS
+from src.config import MODELS, OPTUNA_DB, RANDOM_SEED, REPORTS, available_ram_gb
 from src.data import learn_categories, load_split, xy
-from src.models import MODEL_NAMES, fit, predict, scale_pos_weight
+from src.models import MODEL_NAMES, fit, predict
+from src.weights import combined_weights, effective_sample_size
 from src.fmt import pct
 from src.schema import FEATURES, LABEL
 
@@ -40,9 +41,13 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 SUBSAMPLE = 0.10   # of the NEGATIVES; every fraud is kept
 DEFAULT_TRIALS = 30
+# Stored inside best_params but consumed by the weighting code, not by the
+# model, so it is popped back out before any params dict reaches a booster.
+HALF_LIFE_KEY = "recency_half_life_days"
 
 
-def subsample(X, y, frac: float, seed: int = RANDOM_SEED, keep_all_positives: bool = True):
+def subsample(X, y, frac: float, seed: int = RANDOM_SEED, keep_all_positives: bool = True,
+              dates=None):
     """Shrink the search set without throwing away the signal.
 
     A plain stratified 5% sample was measured to be actively misleading here:
@@ -63,6 +68,8 @@ def subsample(X, y, frac: float, seed: int = RANDOM_SEED, keep_all_positives: bo
         pos = rng.choice(pos, size=max(int(round(len(pos) * frac)), 1), replace=False)
     neg = rng.choice(neg, size=max(int(round(len(neg) * frac)), 1), replace=False)
     sel = np.sort(np.concatenate([pos, neg]))
+    if dates is not None:
+        return X.iloc[sel], y_arr[sel], dates.iloc[sel]
     return X.iloc[sel], y_arr[sel]
 
 
@@ -95,21 +102,66 @@ def suggest(trial: optuna.Trial, name: str) -> dict:
     }
 
 
-def tune_one(name: str, X_sub, y_sub, X_val, y_val, trials: int) -> dict:
+def _progress(name: str, total: int):
+    """Print each trial as it lands, so a long study is not a silent black box."""
+
+    def cb(study: optuna.Study, trial: optuna.trial.FrozenTrial) -> None:
+        done = len([t for t in study.trials
+                    if t.state == optuna.trial.TrialState.COMPLETE])
+        ram = available_ram_gb()
+        ram_note = f"  ram_free={ram:.1f}gb" if ram is not None else ""
+        best = study.best_value if study.best_trial else float("nan")
+        print(f"    [{name}] trial {done}/{total}  this={pct(trial.value)}  "
+              f"best={pct(best)}{ram_note}", flush=True)
+
+    return cb
+
+
+def tune_one(name: str, X_sub, y_sub, X_val, y_val, trials: int,
+             dates_sub=None) -> dict:
     def objective(trial: optuna.Trial) -> float:
         params = suggest(trial, name)
-        model = fit(name, X_sub, y_sub, X_val, y_val, params=params)
-        p = predict(name, model, X_val)
+        # How fast old evidence should stop counting is not something to assert
+        # -- this dataset's fraud mechanism drifts, so the decay rate is tuned
+        # alongside everything else. 0 means no decay (all history equal).
+        half_life = trial.suggest_categorical(
+            HALF_LIFE_KEY, [0, 180, 365, 730, 1095])
+        w = combined_weights(y_sub, dates_sub, half_life)
+        try:
+            model = fit(name, X_sub, y_sub, X_val, y_val, params=params,
+                        sample_weight=w)
+            p = predict(name, model, X_val)
+        except Exception as exc:  # noqa: BLE001 - MemoryError included
+            # One greedy configuration must not take the whole study with it.
+            # Pruning the trial lets the sampler learn to avoid that corner.
+            print(f"    [{name}] trial failed ({type(exc).__name__}: "
+                  f"{str(exc)[:90]}) -- pruned", flush=True)
+            raise optuna.TrialPruned() from exc
         return float(average_precision_score(y_val, p))
 
+    # SQLite-backed so an interrupted search RESUMES instead of restarting from
+    # trial zero. On a memory-tight laptop that is not a nicety: it is the
+    # difference between losing twenty minutes and losing three hours.
     study = optuna.create_study(
         direction="maximize",
         sampler=optuna.samplers.TPESampler(seed=RANDOM_SEED),
         study_name=f"{name}-pr-auc",
+        storage=f"sqlite:///{OPTUNA_DB.as_posix()}",
+        load_if_exists=True,
     )
-    print(f"\n[tune] {name}: {trials} trials on {len(y_sub):,} subsampled rows "
+    done = len([t for t in study.trials
+                if t.state == optuna.trial.TrialState.COMPLETE])
+    remaining = max(trials - done, 0)
+    print(f"\n[tune] {name}: {len(y_sub):,} search rows "
           f"({int(np.sum(y_sub))} frauds), scored on {len(y_val):,} full val rows")
-    study.optimize(objective, n_trials=trials, show_progress_bar=False)
+    if done:
+        print(f"[tune] {name}: resuming -- {done} completed trial(s) found in "
+              f"{OPTUNA_DB.name}, {remaining} to go")
+    if remaining == 0:
+        print(f"[tune] {name}: study already complete, skipping")
+    else:
+        study.optimize(objective, n_trials=remaining, show_progress_bar=False,
+                       callbacks=[_progress(name, trials)], gc_after_trial=True)
 
     print(f"[tune] {name}: best val PR-AUC {pct(study.best_value)}")
     print(f"[tune] {name}: best params {study.best_params}")
@@ -138,23 +190,36 @@ def main() -> None:
     ap.add_argument("--trials", type=int, default=DEFAULT_TRIALS)
     ap.add_argument("--subsample", type=float, default=SUBSAMPLE)
     ap.add_argument("--models", nargs="*", default=list(MODEL_NAMES))
+    ap.add_argument("--force", action="store_true",
+                    help="re-tune even if best_params already exist")
     args = ap.parse_args()
 
-    train = load_split("train", columns=FEATURES + [LABEL])
+    train = load_split("train", columns=FEATURES + [LABEL, "date"])
     cats = learn_categories(train)
     X_tr, y_tr = train[FEATURES], train[LABEL].to_numpy()
+    dates_tr = train["date"]
     del train
     X_val, y_val = xy("val", cats)
     y_val = y_val.to_numpy()
 
-    X_sub, y_sub = subsample(X_tr, y_tr, args.subsample)
+    X_sub, y_sub, dates_sub = subsample(X_tr, y_tr, args.subsample,
+                                        dates=dates_tr)
     print(f"[tune] train {len(y_tr):,} rows ({int(y_tr.sum())} frauds) "
           f"-> search sample {len(y_sub):,} rows ({int(y_sub.sum())} frauds)")
-    del X_tr
+    print(f"[tune] recency decay is a tuned dimension; half-life candidates "
+          f"(days): 0 (off), 180, 365, 730, 1095")
+    del X_tr, dates_tr
 
     results = {}
     for name in args.models:
-        results[name] = tune_one(name, X_sub, y_sub, X_val, y_val, args.trials)
+        done_file = MODELS / f"best_params_{name}.json"
+        if done_file.exists() and not args.force:
+            print(f"[tune] {name}: {done_file.name} already exists, skipping "
+                  f"(use --force to redo)")
+            results[name] = json.loads(done_file.read_text(encoding="utf-8"))
+            continue
+        results[name] = tune_one(name, X_sub, y_sub, X_val, y_val, args.trials,
+                                 dates_sub=dates_sub)
 
     summary = {n: {"best_val_pr_auc": r["best_val_pr_auc"],
                    "best_params": r["best_params"]} for n, r in results.items()}

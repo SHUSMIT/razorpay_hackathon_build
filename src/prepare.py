@@ -53,7 +53,10 @@ def _money(s: pd.Series) -> pd.Series:
 
 
 def _yes_no(s: pd.Series) -> pd.Series:
-    return (s.astype("string").str.strip().str.lower() == "yes").astype("int8")
+    """'YES'/'No' -> 1/0. A missing value is treated as 'not yes' rather than
+    propagating NA, so an incomplete card record cannot crash the pipeline."""
+    return ((s.astype("string").str.strip().str.lower() == "yes")
+            .fillna(False).astype("int8"))
 
 
 # ------------------------------------------------------------------ loading
