@@ -171,9 +171,12 @@ stopped rather than starting over.
 artefacts and reports are committed on purpose, because they are the evidence a
 reviewer reads.
 
-**Machine budget.** Training is capped to half the logical cores and CatBoost
-gets a hard memory ceiling, so the machine stays usable. Override with
-`FRM_THREADS` and `FRM_RAM_GB`.
+**Machine budget.** Training is capped to half the logical cores so the machine
+stays usable, and CatBoost's categorical-combination depth is capped, which is
+the setting that actually controls its memory appetite. `used_ram_limit` is a
+hint to CatBoost's allocator rather than an enforced cap — the real safety net
+is that a failed fit retries on fewer *negative* rows, keeping every fraud, and
+says so in the report. Override with `FRM_THREADS` and `FRM_RAM_GB`.
 
 ---
 

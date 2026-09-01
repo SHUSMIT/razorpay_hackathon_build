@@ -104,9 +104,19 @@ def default_cat_params(y) -> dict:
         "thread_count": N_THREADS,
         # --- memory guards ---
         # CatBoost is the only member that will consume whatever it is given.
-        # On a 7.6GB laptop with ~1.5GB free that is fatal, so it gets a hard
-        # ceiling and its categorical-combination depth is capped. Both cost a
-        # little accuracy and buy a run that finishes.
+        # On a 7.6GB laptop with ~1.5GB free that is fatal.
+        #
+        # `used_ram_limit` is a hint to CatBoost's own allocator, NOT a hard
+        # cap enforced by the OS: during the 7.3M-row fit the process still
+        # peaked around 2.7GB resident, and CatBoost logged its internal
+        # "ResourceQuota" diagnostic several times while completing normally.
+        # Treat it as pressure relief, not a guarantee -- the actual safety net
+        # is the fraud-preserving fallback in src/train.py, which retries on
+        # fewer negatives if a fit genuinely dies.
+        #
+        # max_ctr_complexity is the setting that really matters here: the
+        # default of 4 builds combination statistics across categorical columns
+        # and is a memory bomb on millions of rows.
         "used_ram_limit": CATBOOST_RAM_LIMIT,
         "max_ctr_complexity": CATBOOST_MAX_CTR_COMPLEXITY,
         "border_count": 128,
@@ -234,28 +244,43 @@ def fit_ensemble_weights(preds: dict[str, np.ndarray], y) -> dict[str, float]:
     from sklearn.metrics import average_precision_score
 
     names = [n for n in MODEL_NAMES if n in preds]
-    best, best_score = None, -1.0
-    grid = np.arange(0, 11) / 10.0
-    for w in _simplex(len(names), grid):
+    best, best_score, tried = None, -1.0, 0
+    for w in simplex(len(names)):
         blend = sum(wi * preds[n] for wi, n in zip(w, names))
         s = average_precision_score(y, blend)
+        tried += 1
         if s > best_score:
             best, best_score = w, s
     weights = {n: float(round(wi, 3)) for n, wi in zip(names, best)}
-    print(f"[ensemble] val PR-AUC {best_score:.4f} with weights {weights}")
+    print(f"[ensemble] searched {tried} weight combinations; best val PR-AUC "
+          f"{best_score:.4f} with weights {weights}")
     return weights
 
 
-def _simplex(k: int, grid: np.ndarray):
-    if k == 1:
-        yield (1.0,)
-        return
-    for w in grid:
-        for rest in _simplex(k - 1, grid):
-            if abs(w + sum(rest) - 1.0) < 1e-9:
-                yield (w, *rest)
-            elif k == 2:
-                continue
+def simplex(k: int, steps: int = 10):
+    """Every weight vector on the k-simplex in increments of 1/steps.
+
+    Enumerates the compositions of `steps` into `k` non-negative parts, which
+    for three members at 0.1 resolution is 66 candidates -- cheap enough to
+    search exhaustively on cached predictions, so the true optimum is found
+    rather than estimated.
+
+    (An earlier version filtered a product of grids by "does this sum to 1?"
+    and, through a recursion bug, only ever emitted the single corner
+    (0, ..., 0, 1). It searched nothing while appearing to search. Enumerating
+    compositions directly cannot degenerate that way, and
+    test_simplex_enumerates_the_whole_grid pins the count.)
+    """
+    def compositions(parts: int, remaining: int):
+        if parts == 1:
+            yield (remaining,)
+            return
+        for i in range(remaining + 1):
+            for rest in compositions(parts - 1, remaining - i):
+                yield (i, *rest)
+
+    for combo in compositions(k, steps):
+        yield tuple(c / steps for c in combo)
 
 
 def ensemble_predict(preds: dict[str, np.ndarray], weights: dict[str, float]) -> np.ndarray:

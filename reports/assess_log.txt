@@ -1,0 +1,15 @@
+[assess] scoring validation
+[assess]   val_fit 427,918 rows (688 frauds) -- model choice + calibration
+[assess]   val_sel 285,279 rows (555 frauds) -- threshold selection
+
+[assess] PR-AUC on val_fit (this is what selects the model)
+    xgboost      71.87%  <-- shipped
+    histgb       66.43%
+    ensemble     66.43%
+    catboost     58.60%
+
+[assess] isotonic calibration for 'xgboost' (fitted on val_fit, measured on val_sel)
+    expected calibration error 3.5438% -> 0.0047%
+[assess] review band sized by capacity: score >= 27.31% sends 0.20% of traffic to a human (target 0.20%)
+
+[assess] scoring the held-out TEST split (first and only look)

@@ -119,3 +119,41 @@
 [train] fitting catboost (1.5gb RAM free)
 [train] catboost: using tuned params (search val PR-AUC 61.90%)
 [train] catboost: recency half-life 180 days (a fraud that old counts half as much as one today)
+CatBoost is using more CPU RAM (2.51GiB) than the limit (2GiB)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+[train] catboost   val PR-AUC 59.68%  ROC-AUC 99.43%  (2720s)
+[train] fitting histgb (2.8gb RAM free)
+[train] histgb: using tuned params (search val PR-AUC 66.74%)
+[train] histgb: recency half-life 180 days (a fraud that old counts half as much as one today)
+[train] histgb     val PR-AUC 65.86%  ROC-AUC 99.53%  (98s)
+[ensemble] val PR-AUC 0.6643 with weights {'xgboost': 0.0, 'catboost': 0.0, 'histgb': 1.0}
+[train] calibration (isotonic, fitted on val_fit, measured on val_sel)
+    expected calibration error 3.5082% -> 0.0138%
+    PR-AUC 65.35% -> 65.21% (monotone map: ranking is unchanged by construction)
+
+[train] validation summary (random baseline PR-AUC = 0.00174)
+    xgboost    PR-AUC 0.7049  ROC-AUC 0.9953
+    histgb     PR-AUC 0.6586  ROC-AUC 0.9953
+    ensemble   PR-AUC 0.6586  ROC-AUC 0.9953
+    catboost   PR-AUC 0.5968  ROC-AUC 0.9943
+[train] ensemble does NOT improve on the best single model on val (-0.0463)
+[train] wrote reports/training_summary.json
+[assess] scoring validation
+[assess]   val_fit 427,918 rows (688 frauds) -- model choice + calibration
+[assess]   val_sel 285,279 rows (555 frauds) -- threshold selection
+
+[assess] PR-AUC on val_fit (this is what selects the model)
+    xgboost      71.87%  <-- shipped
+    histgb       66.43%
+    ensemble     66.43%
+    catboost     58.60%
+
+[assess] isotonic calibration for 'xgboost' (fitted on val_fit, measured on val_sel)
+    expected calibration error 3.5438% -> 0.0047%
+[assess] review band sized by capacity: score >= 27.31% sends 0.20% of traffic to a human (target 0.20%)
+
+[assess] scoring the held-out TEST split (first and only look)

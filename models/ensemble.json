@@ -1,0 +1,16 @@
+{
+  "weights": {
+    "xgboost": 0.9,
+    "catboost": 0.1,
+    "histgb": 0.0
+  },
+  "val_pr_auc": 0.7060407117611895,
+  "best_single_val_pr_auc": 0.7048509876742275,
+  "beats_best_single_on_val": true,
+  "members": [
+    "catboost",
+    "histgb",
+    "xgboost"
+  ],
+  "note": "Weights re-searched after fixing a bug that made the original search evaluate only one candidate. See src/models.simplex."
+}
