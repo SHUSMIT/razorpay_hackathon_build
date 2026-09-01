@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.config import DATA_PROCESSED, REPORTS  # noqa: E402
+from src.demo_payload import display_fields, to_payload  # noqa: E402
 from src.schema import LABEL, label  # noqa: E402
 
 API = os.environ.get("FRM_API", "http://127.0.0.1:8000")
@@ -73,33 +74,6 @@ def load_report(name: str) -> dict:
         except json.JSONDecodeError:
             return {}
     return {}
-
-
-def to_payload(row: pd.Series) -> dict:
-    """Rebuild the transaction a gateway would have sent, from a demo row."""
-    amount = float(row["abs_amount"])
-    ratio = row.get("amount_to_credit_limit")
-    credit_limit = float(amount / ratio) if ratio and ratio == ratio and ratio > 0 else None
-    err = row.get("error_kind")
-    return {
-        "amount": amount,
-        "date": str(row["date"]),
-        "use_chip": _clean(row.get("use_chip")),
-        "merchant_state": _clean(row.get("merchant_state")),
-        "mcc_category": _clean(row.get("mcc_category")),
-        "card_brand": _clean(row.get("card_brand")),
-        "card_type": _clean(row.get("card_type")),
-        "has_chip": bool(row["has_chip"]) if row.get("has_chip") == row.get("has_chip") else None,
-        "is_online": bool(row["is_online"]),
-        "errors": None if (err is None or str(err) in ("none", "nan")) else str(err),
-        "credit_limit": credit_limit,
-    }
-
-
-def _clean(v):
-    if v is None or (isinstance(v, float) and v != v) or str(v) == "nan":
-        return None
-    return str(v)
 
 
 def decision_banner(decision: str, score_pct: str, gated: bool):
@@ -198,16 +172,7 @@ with tab_live:
             if row is not None:
                 payload = to_payload(pd.Series(row))
                 st.markdown("**Transaction**")
-                shown = {
-                    "Amount": f"{payload['amount']:,.2f}",
-                    "When": str(payload["date"])[:16],
-                    "Presented": payload["use_chip"] or "unknown",
-                    "Merchant category": payload["mcc_category"] or "unknown",
-                    "Merchant state": payload["merchant_state"] or "unknown",
-                    "Card": " ".join(x for x in [payload["card_brand"],
-                                                 payload["card_type"]] if x) or "unknown",
-                    "Terminal error": payload["errors"] or "none",
-                }
+                shown = display_fields(payload)
                 st.table(pd.DataFrame(shown.items(),
                                       columns=["Field", "Value"]).set_index("Field"))
                 if st.button("Score it", type="primary", width="stretch"):

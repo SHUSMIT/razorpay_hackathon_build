@@ -125,7 +125,7 @@ def tune_one(name: str, X_sub, y_sub, X_val, y_val, trials: int,
         # -- this dataset's fraud mechanism drifts, so the decay rate is tuned
         # alongside everything else. 0 means no decay (all history equal).
         half_life = trial.suggest_categorical(
-            HALF_LIFE_KEY, [0, 180, 365, 730, 1095])
+            HALF_LIFE_KEY, [0, 30, 60, 90, 120, 180, 365, 730])
         w = combined_weights(y_sub, dates_sub, half_life)
         try:
             model = fit(name, X_sub, y_sub, X_val, y_val, params=params,
@@ -207,7 +207,7 @@ def main() -> None:
     print(f"[tune] train {len(y_tr):,} rows ({int(y_tr.sum())} frauds) "
           f"-> search sample {len(y_sub):,} rows ({int(y_sub.sum())} frauds)")
     print(f"[tune] recency decay is a tuned dimension; half-life candidates "
-          f"(days): 0 (off), 180, 365, 730, 1095")
+          f"(days): 0 (off), 30, 60, 90, 120, 180, 365, 730")
     del X_tr, dates_tr
 
     results = {}

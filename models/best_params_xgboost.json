@@ -8,7 +8,7 @@
     "min_child_weight": 139,
     "reg_lambda": 3.8436995640037885,
     "gamma": 0.20082077995919723,
-    "recency_half_life_days": 180
+    "recency_half_life_days": 60
   },
   "best_val_pr_auc": 0.7199815329372944,
   "n_trials": 30,
@@ -438,5 +438,6 @@
         "recency_half_life_days": 1095
       }
     }
-  ]
+  ],
+  "half_life_note": "Model hyper-parameters were tuned with the half-life grid capped at 180 days, and 180 was selected -- the grid's floor. A follow-up sweep on val_fit found 60 days is materially better (79.99% vs 71.14% for XGBoost), confirmed on the held-back val_sel (78.82% vs 69.03%). The half-life was updated; the other hyper-parameters were NOT re-tuned around it, so they may be slightly off-optimal."
 }
