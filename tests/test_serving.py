@@ -172,3 +172,64 @@ def test_threshold_sweep_is_ordered_and_complete():
     assert sweep["threshold"].is_monotonic_increasing
     assert sweep["recall"].iloc[0] >= sweep["recall"].iloc[-1], \
         "recall must fall as the threshold rises"
+
+
+# ------------------------------------------------- reporting path (regression)
+def test_every_reporting_function_actually_runs(tmp_path):
+    """Exercise the whole assess.py downstream path on synthetic data.
+
+    src/metrics.py was extracted from an older module and lost two of its
+    sklearn imports in the move. Nothing caught it, because importing the
+    module still worked -- the NameError only fired when a function was
+    called. That would have crashed the final report after hours of training.
+    This test calls every one of them.
+    """
+    from src.metrics import (
+        bootstrap_pr_auc,
+        core_metrics,
+        cost_at,
+        do_nothing_cost,
+        paired_bootstrap_delta,
+        plot_cost_curve,
+        plot_pr_curve,
+        sweep_thresholds,
+    )
+
+    rng = np.random.default_rng(0)
+    n = 5000
+    y = (rng.random(n) < 0.02).astype(int)
+    p = np.clip(rng.random(n) * 0.2 + y * rng.random(n) * 0.8, 0, 1)
+    amounts = rng.lognormal(3.5, 1.2, n)
+
+    m = core_metrics(y, p, 0.5)
+    for key in ("precision", "recall", "f1", "pr_auc", "roc_auc"):
+        assert key in m
+
+    ci = bootstrap_pr_auc(y, p, n_boot=30)
+    assert ci["ci_low"] <= ci["point"] <= ci["ci_high"]
+
+    delta = paired_bootstrap_delta(y, p, p * 0.5, n_boot=30)
+    assert "significant_at_95" in delta
+
+    sweep = sweep_thresholds(y, p, amounts)
+    best = cost_at(y, p, amounts, 0.5)
+    nothing = do_nothing_cost(y, amounts)
+    assert len(sweep) > 10 and nothing > 0
+
+    plot_pr_curve(y, p, tmp_path / "pr.png", "regression check")
+    plot_cost_curve(sweep, best, nothing, tmp_path / "cost.png")
+    for name in ("pr.png", "cost.png"):
+        assert (tmp_path / name).stat().st_size > 5000, f"{name} looks empty"
+
+
+def test_a_monotone_rescoring_does_not_change_pr_auc():
+    """Sanity check on the comparison machinery: PR-AUC is rank-based, so a
+    monotone transform of the scores must not move it. If this ever fails, the
+    ensemble-vs-single comparison is measuring the wrong thing."""
+    from src.metrics import paired_bootstrap_delta
+
+    rng = np.random.default_rng(1)
+    y = (rng.random(4000) < 0.03).astype(int)
+    p = rng.random(4000)
+    delta = paired_bootstrap_delta(y, p, p * 0.9 + 0.01, n_boot=30)
+    assert abs(delta["delta_point"]) < 1e-9

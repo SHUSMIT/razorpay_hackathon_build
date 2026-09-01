@@ -38,3 +38,43 @@
 [tune] catboost: 740,467 search rows (10489 frauds), scored on 713,197 full val rows
     [catboost] trial 1/30  this=27.68%  best=27.68%  ram_free=1.7gb
     [catboost] trial 2/30  this=31.02%  best=31.02%  ram_free=1.6gb
+    [catboost] trial 3/30  this=36.73%  best=36.73%  ram_free=1.5gb
+    [catboost] trial 4/30  this=26.06%  best=36.73%  ram_free=1.5gb
+    [catboost] trial 5/30  this=3.17%  best=36.73%  ram_free=1.6gb
+    [catboost] trial 6/30  this=61.09%  best=61.09%  ram_free=1.6gb
+    [catboost] trial 7/30  this=20.04%  best=61.09%  ram_free=1.6gb
+    [catboost] trial 8/30  this=9.77%  best=61.09%  ram_free=1.5gb
+    [catboost] trial 9/30  this=20.62%  best=61.09%  ram_free=1.6gb
+    [catboost] trial 10/30  this=2.01%  best=61.09%  ram_free=1.5gb
+    [catboost] trial 11/30  this=52.40%  best=61.09%  ram_free=1.4gb
+    [catboost] trial 12/30  this=47.86%  best=61.09%  ram_free=1.4gb
+    [catboost] trial 13/30  this=46.81%  best=61.09%  ram_free=1.5gb
+    [catboost] trial 14/30  this=55.55%  best=61.09%  ram_free=1.5gb
+    [catboost] trial 15/30  this=19.50%  best=61.09%  ram_free=1.5gb
+    [catboost] trial 16/30  this=56.93%  best=61.09%  ram_free=1.5gb
+    [catboost] trial 17/30  this=60.35%  best=61.09%  ram_free=2.0gb
+    [catboost] trial 18/30  this=56.31%  best=61.09%  ram_free=2.0gb
+    [catboost] trial 19/30  this=28.49%  best=61.09%  ram_free=1.9gb
+    [catboost] trial 20/30  this=40.00%  best=61.09%  ram_free=2.0gb
+    [catboost] trial 21/30  this=19.66%  best=61.09%  ram_free=1.8gb
+    [catboost] trial 22/30  this=56.24%  best=61.09%  ram_free=1.8gb
+    [catboost] trial 23/30  this=60.16%  best=61.09%  ram_free=1.9gb
+    [catboost] trial 24/30  this=61.90%  best=61.90%  ram_free=1.9gb
+    [catboost] trial 25/30  this=61.68%  best=61.90%  ram_free=1.8gb
+    [catboost] trial 26/30  this=26.91%  best=61.90%  ram_free=1.2gb
+    [catboost] trial 27/30  this=57.49%  best=61.90%  ram_free=1.7gb
+    [catboost] trial 28/30  this=61.51%  best=61.90%  ram_free=1.6gb
+    [catboost] trial 29/30  this=60.20%  best=61.90%  ram_free=0.6gb
+    [catboost] trial 30/30  this=60.98%  best=61.90%  ram_free=1.4gb
+[tune] catboost: best val PR-AUC 61.90%
+[tune] catboost: best params {'depth': 8, 'learning_rate': 0.026291393834472376, 'l2_leaf_reg': 5.8183612658465025, 'random_strength': 0.007257567800266579, 'bagging_temperature': 0.24007849287373728, 'iterations': 350, 'recency_half_life_days': 180}
+
+[tune] histgb: 740,467 search rows (10489 frauds), scored on 713,197 full val rows
+    [histgb] trial 1/30  this=49.81%  best=49.81%  ram_free=0.7gb
+    [histgb] trial 2/30  this=44.36%  best=49.81%  ram_free=1.3gb
+    [histgb] trial 3/30  this=37.81%  best=49.81%  ram_free=1.3gb
+    [histgb] trial 4/30  this=40.50%  best=49.81%  ram_free=1.3gb
+    [histgb] trial 5/30  this=25.65%  best=49.81%  ram_free=1.4gb
+    [histgb] trial 6/30  this=28.61%  best=49.81%  ram_free=1.2gb
+    [histgb] trial 7/30  this=38.55%  best=49.81%  ram_free=1.2gb
+    [histgb] trial 8/30  this=66.74%  best=66.74%  ram_free=1.2gb

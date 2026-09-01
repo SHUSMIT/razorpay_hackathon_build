@@ -1,0 +1,411 @@
+{
+  "model": "catboost",
+  "best_params": {
+    "depth": 8,
+    "learning_rate": 0.026291393834472376,
+    "l2_leaf_reg": 5.8183612658465025,
+    "random_strength": 0.007257567800266579,
+    "bagging_temperature": 0.24007849287373728,
+    "iterations": 350,
+    "recency_half_life_days": 180
+  },
+  "best_val_pr_auc": 0.6190342006477624,
+  "n_trials": 30,
+  "subsample_frac": 0.1,
+  "subsample_rows": 740467,
+  "subsample_frauds": 10489,
+  "val_rows": 713197,
+  "val_frauds": 1243,
+  "trial_history": [
+    {
+      "number": 0,
+      "value": 0.2767725278729556,
+      "params": {
+        "depth": 5,
+        "learning_rate": 0.262516606324193,
+        "l2_leaf_reg": 29.10635913133069,
+        "random_strength": 0.24810409748678125,
+        "bagging_temperature": 0.15601864044243652,
+        "iterations": 293,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 1,
+      "value": 0.31024228730728665,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.19057174434080473,
+        "l2_leaf_reg": 2.65875439832727,
+        "random_strength": 0.005337032762603957,
+        "bagging_temperature": 0.18340450985343382,
+        "iterations": 382,
+        "recency_half_life_days": 730
+      }
+    },
+    {
+      "number": 2,
+      "value": 0.3673438964676245,
+      "params": {
+        "depth": 4,
+        "learning_rate": 0.05393925667147033,
+        "l2_leaf_reg": 8.168455894760163,
+        "random_strength": 1.382623217936987,
+        "bagging_temperature": 0.19967378215835974,
+        "iterations": 509,
+        "recency_half_life_days": 365
+      }
+    },
+    {
+      "number": 3,
+      "value": 0.2606449676656635,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.27333886656404544,
+        "l2_leaf_reg": 41.380401125610156,
+        "random_strength": 0.01653693718282442,
+        "bagging_temperature": 0.09767211400638387,
+        "iterations": 611,
+        "recency_half_life_days": 1095
+      }
+    },
+    {
+      "number": 4,
+      "value": 0.03167375932900707,
+      "params": {
+        "depth": 4,
+        "learning_rate": 0.12028643765567952,
+        "l2_leaf_reg": 4.201672054372529,
+        "random_strength": 0.12030178871154672,
+        "bagging_temperature": 0.5467102793432796,
+        "iterations": 311,
+        "recency_half_life_days": 0
+      }
+    },
+    {
+      "number": 5,
+      "value": 0.6109291147580024,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.025415885998427375,
+        "l2_leaf_reg": 2.4658447214487373,
+        "random_strength": 0.0015167330688076208,
+        "bagging_temperature": 0.32533033076326434,
+        "iterations": 433,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 6,
+      "value": 0.20039624688415095,
+      "params": {
+        "depth": 3,
+        "learning_rate": 0.17558477392891916,
+        "l2_leaf_reg": 1.4096175149815862,
+        "random_strength": 8.862326508576253,
+        "bagging_temperature": 0.7722447692966574,
+        "iterations": 319,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 7,
+      "value": 0.09772450264844632,
+      "params": {
+        "depth": 3,
+        "learning_rate": 0.0527981135485379,
+        "l2_leaf_reg": 1.7050539260269288,
+        "random_strength": 2.8340904295147746,
+        "bagging_temperature": 0.6232981268275579,
+        "iterations": 398,
+        "recency_half_life_days": 730
+      }
+    },
+    {
+      "number": 8,
+      "value": 0.20616332078025484,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.07184521380536976,
+        "l2_leaf_reg": 1.7345566642360934,
+        "random_strength": 0.7128188058401367,
+        "bagging_temperature": 0.7607850486168974,
+        "iterations": 537,
+        "recency_half_life_days": 0
+      }
+    },
+    {
+      "number": 9,
+      "value": 0.020066829131267092,
+      "params": {
+        "depth": 3,
+        "learning_rate": 0.021776776116226245,
+        "l2_leaf_reg": 18.742210985555694,
+        "random_strength": 0.018089390092767135,
+        "bagging_temperature": 0.5085706911647028,
+        "iterations": 745,
+        "recency_half_life_days": 365
+      }
+    },
+    {
+      "number": 10,
+      "value": 0.523983205486514,
+      "params": {
+        "depth": 6,
+        "learning_rate": 0.020327465381558753,
+        "l2_leaf_reg": 86.91089486124964,
+        "random_strength": 0.0011799062523159324,
+        "bagging_temperature": 0.9614774680318497,
+        "iterations": 745,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 11,
+      "value": 0.4786407998903981,
+      "params": {
+        "depth": 6,
+        "learning_rate": 0.0213504824569531,
+        "l2_leaf_reg": 97.45153377283718,
+        "random_strength": 0.0010839006279033633,
+        "bagging_temperature": 0.9458097199737129,
+        "iterations": 767,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 12,
+      "value": 0.46809421655427597,
+      "params": {
+        "depth": 6,
+        "learning_rate": 0.03295212231527655,
+        "l2_leaf_reg": 7.148659495423885,
+        "random_strength": 0.0010408422465102238,
+        "bagging_temperature": 0.37163865746739466,
+        "iterations": 660,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 13,
+      "value": 0.5554822411411688,
+      "params": {
+        "depth": 7,
+        "learning_rate": 0.035477802752400346,
+        "l2_leaf_reg": 13.754021808642314,
+        "random_strength": 0.003177574164711418,
+        "bagging_temperature": 0.9882624714708896,
+        "iterations": 217,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 14,
+      "value": 0.19498472376552325,
+      "params": {
+        "depth": 7,
+        "learning_rate": 0.03524257036706545,
+        "l2_leaf_reg": 13.192217786674615,
+        "random_strength": 0.007435063392900098,
+        "bagging_temperature": 0.35532359264383306,
+        "iterations": 243,
+        "recency_half_life_days": 1095
+      }
+    },
+    {
+      "number": 15,
+      "value": 0.5692520629765522,
+      "params": {
+        "depth": 7,
+        "learning_rate": 0.03394540490451241,
+        "l2_leaf_reg": 4.044758550598606,
+        "random_strength": 0.003591297227215352,
+        "bagging_temperature": 0.011442846375195104,
+        "iterations": 448,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 16,
+      "value": 0.603476770067402,
+      "params": {
+        "depth": 7,
+        "learning_rate": 0.03032468935724422,
+        "l2_leaf_reg": 4.382282365789648,
+        "random_strength": 0.0388395191647991,
+        "bagging_temperature": 0.03671068853658421,
+        "iterations": 460,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 17,
+      "value": 0.5631293033595842,
+      "params": {
+        "depth": 7,
+        "learning_rate": 0.05095938860494144,
+        "l2_leaf_reg": 3.4711409788059564,
+        "random_strength": 0.04563018803288463,
+        "bagging_temperature": 0.30970094405433235,
+        "iterations": 491,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 18,
+      "value": 0.28494432671967124,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.0270650225484173,
+        "l2_leaf_reg": 1.0374031558918357,
+        "random_strength": 0.09652783379194016,
+        "bagging_temperature": 0.0005913241736975258,
+        "iterations": 579,
+        "recency_half_life_days": 730
+      }
+    },
+    {
+      "number": 19,
+      "value": 0.4000080117502242,
+      "params": {
+        "depth": 7,
+        "learning_rate": 0.07514372278832791,
+        "l2_leaf_reg": 7.2594574793642686,
+        "random_strength": 0.029406308765480484,
+        "bagging_temperature": 0.31397323149990247,
+        "iterations": 419,
+        "recency_half_life_days": 365
+      }
+    },
+    {
+      "number": 20,
+      "value": 0.19656760783277855,
+      "params": {
+        "depth": 6,
+        "learning_rate": 0.043693586339418035,
+        "l2_leaf_reg": 2.5655703474665152,
+        "random_strength": 0.46899671234917434,
+        "bagging_temperature": 0.4470320626912227,
+        "iterations": 664,
+        "recency_half_life_days": 0
+      }
+    },
+    {
+      "number": 21,
+      "value": 0.5624092431049673,
+      "params": {
+        "depth": 7,
+        "learning_rate": 0.029036670544077048,
+        "l2_leaf_reg": 4.439127465040922,
+        "random_strength": 0.003204233723208559,
+        "bagging_temperature": 0.002558310540627412,
+        "iterations": 451,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 22,
+      "value": 0.6016132144433415,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.02632589898288414,
+        "l2_leaf_reg": 5.522584879194355,
+        "random_strength": 0.009631704260007985,
+        "bagging_temperature": 0.09098605933905293,
+        "iterations": 455,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 23,
+      "value": 0.6190342006477624,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.026291393834472376,
+        "l2_leaf_reg": 5.8183612658465025,
+        "random_strength": 0.007257567800266579,
+        "bagging_temperature": 0.24007849287373728,
+        "iterations": 350,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 24,
+      "value": 0.6168232370112214,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.0448696062096067,
+        "l2_leaf_reg": 2.3501435602809817,
+        "random_strength": 0.07605320004320845,
+        "bagging_temperature": 0.24765546379087758,
+        "iterations": 359,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 25,
+      "value": 0.2690952947399128,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.06902311025014626,
+        "l2_leaf_reg": 2.501712219843187,
+        "random_strength": 0.0018690381668658408,
+        "bagging_temperature": 0.25631505303014923,
+        "iterations": 368,
+        "recency_half_life_days": 1095
+      }
+    },
+    {
+      "number": 26,
+      "value": 0.5748521944669965,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.041975533395467744,
+        "l2_leaf_reg": 1.150053474096728,
+        "random_strength": 0.008748268721728089,
+        "bagging_temperature": 0.44779196872008076,
+        "iterations": 267,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 27,
+      "value": 0.6150929482994131,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.04235075704144242,
+        "l2_leaf_reg": 2.102161608821923,
+        "random_strength": 0.09347463354382354,
+        "bagging_temperature": 0.2603968252922808,
+        "iterations": 362,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 28,
+      "value": 0.6020417797981844,
+      "params": {
+        "depth": 8,
+        "learning_rate": 0.09768481591422591,
+        "l2_leaf_reg": 1.957989049669552,
+        "random_strength": 0.10649737432398003,
+        "bagging_temperature": 0.20867255559667142,
+        "iterations": 334,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 29,
+      "value": 0.6097530341846161,
+      "params": {
+        "depth": 7,
+        "learning_rate": 0.040119209979492663,
+        "l2_leaf_reg": 10.347781717327948,
+        "random_strength": 0.25202973262569695,
+        "bagging_temperature": 0.12342092511977315,
+        "iterations": 359,
+        "recency_half_life_days": 180
+      }
+    }
+  ]
+}

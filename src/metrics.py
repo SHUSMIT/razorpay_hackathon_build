@@ -15,7 +15,12 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import average_precision_score, roc_auc_score
+from sklearn.metrics import (
+    average_precision_score,
+    confusion_matrix,
+    precision_recall_curve,
+    roc_auc_score,
+)
 
 from src.config import CHARGEBACK_FEE, FN_COST_MODE, FP_COST
 

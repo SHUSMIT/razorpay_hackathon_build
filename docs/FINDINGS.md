@@ -9,11 +9,13 @@ Every number below is reproducible from the code in this repository.
 
 ---
 
-## 1. A random split scores 4x higher — and it is a lie
+## 1. A random split scores 685x higher — and it is a lie
 
-The dataset covers 2010–2019. Split it at random and the model scores **61%
-PR-AUC**. Split it by time, so evaluation only ever looks forward, and the
-same model scores **0.089%** — barely above the 0.163% base rate.
+The dataset covers 2010–2019. Split it at random and the model scores **61.0%
+PR-AUC**. Split it by time, so evaluation only ever looks forward, and the same
+model on the same features scores **0.089%** — barely above the 0.163% base
+rate. That is a factor of roughly **685**, and the flattering number is the
+wrong one.
 
 The gap is not noise. It is the model recognising **people**.
 
@@ -109,8 +111,19 @@ Measured on validation, identical features:
 | Class weights only | 15.18% |
 | Class weights x recency decay | **46.00%** |
 
-The tuner independently selected the most aggressive decay available, which is
-itself evidence about how fast this data goes stale.
+Both tuned families independently selected **180 days**, the most aggressive
+decay offered, which is itself evidence about how fast this data goes stale.
+
+That also means the search hit the edge of its own grid, so **the true optimum
+may be shorter than 180 days and was not measured.** The candidate set
+{0, 180, 365, 730, 1095} was fixed before this behaviour was known. Extending it
+downward is the first thing to try with more compute.
+
+The feature change also reordered the models. Before `merchant_state` was
+removed, CatBoost led decisively (5.57% vs XGBoost's 0.72%) because its ordered
+target statistics handle a 185-level categorical better than anything else here.
+With that column gone, XGBoost leads (72.0% vs 61.9% on validation). CatBoost's
+advantage was largely its skill at exploiting the shortcut.
 
 ---
 

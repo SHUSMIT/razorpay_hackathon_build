@@ -44,7 +44,7 @@ _No assessment yet. Run `python run.py all`, then `python scripts/update_readme.
 Four measured findings changed this model, and each one would have inflated the
 headline number if left unchecked. Full evidence in **[docs/FINDINGS.md](docs/FINDINGS.md)**.
 
-1. **A random split scores 4x higher, and it is a lie.** With only 2,000
+1. **A random split scores 685x higher, and it is a lie.** With only 2,000
    cardholders, income/debt/credit-score columns form a near-unique fingerprint
    of a *person*. A random split lets the model recognise who was defrauded
    before; a time-based split does not. Removing identity and calendar-drifting
