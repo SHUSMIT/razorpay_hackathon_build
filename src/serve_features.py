@@ -101,11 +101,9 @@ class ServingFeaturizer:
         med = self.mcc_median.get(mcc_category, self.global_median) or self.global_median
         amount_vs_mcc_median = abs_amount / med if med else np.nan
 
-        merchant_state = raw.get("merchant_state")
-        if not merchant_state:
-            merchant_state = "ONLINE" if is_online else None
-            if not is_online:
-                missing.append("merchant_state")
+        # NOTE: merchant_state is accepted by the API but deliberately NOT a
+        # feature -- it was a degenerate shortcut, see docs/FINDINGS.md. It is
+        # ignored here, and its absence is not reported as a gap.
 
         has_chip = raw.get("has_chip")
         row = {
@@ -119,7 +117,6 @@ class ServingFeaturizer:
             "has_error": has_error,
             "has_chip": float(bool(has_chip)) if has_chip is not None else np.nan,
             "use_chip": raw.get("use_chip"),
-            "merchant_state": merchant_state,
             "mcc_category": mcc_category,
             "card_brand": raw.get("card_brand"),
             "card_type": raw.get("card_type"),

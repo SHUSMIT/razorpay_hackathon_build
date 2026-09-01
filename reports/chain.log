@@ -1,0 +1,40 @@
+[tune] train 7,310,269 rows (10489 frauds) -> search sample 740,467 rows (10489 frauds)
+[tune] recency decay is a tuned dimension; half-life candidates (days): 0 (off), 180, 365, 730, 1095
+
+[tune] xgboost: 740,467 search rows (10489 frauds), scored on 713,197 full val rows
+    [xgboost] trial 1/30  this=46.00%  best=46.00%  ram_free=0.9gb
+    [xgboost] trial 2/30  this=35.29%  best=46.00%  ram_free=0.9gb
+    [xgboost] trial 3/30  this=41.16%  best=46.00%  ram_free=0.9gb
+    [xgboost] trial 4/30  this=11.70%  best=46.00%  ram_free=0.9gb
+    [xgboost] trial 5/30  this=12.47%  best=46.00%  ram_free=0.9gb
+    [xgboost] trial 6/30  this=17.49%  best=46.00%  ram_free=0.9gb
+    [xgboost] trial 7/30  this=65.12%  best=65.12%  ram_free=1.0gb
+    [xgboost] trial 8/30  this=16.81%  best=65.12%  ram_free=1.0gb
+    [xgboost] trial 9/30  this=62.07%  best=65.12%  ram_free=1.6gb
+    [xgboost] trial 10/30  this=11.66%  best=65.12%  ram_free=1.6gb
+    [xgboost] trial 11/30  this=70.02%  best=70.02%  ram_free=1.6gb
+    [xgboost] trial 12/30  this=71.90%  best=71.90%  ram_free=1.6gb
+    [xgboost] trial 13/30  this=70.30%  best=71.90%  ram_free=1.6gb
+    [xgboost] trial 14/30  this=70.56%  best=71.90%  ram_free=1.6gb
+    [xgboost] trial 15/30  this=39.30%  best=71.90%  ram_free=1.5gb
+    [xgboost] trial 16/30  this=72.00%  best=72.00%  ram_free=1.5gb
+    [xgboost] trial 17/30  this=52.17%  best=72.00%  ram_free=1.6gb
+    [xgboost] trial 18/30  this=71.05%  best=72.00%  ram_free=1.5gb
+    [xgboost] trial 19/30  this=70.34%  best=72.00%  ram_free=1.2gb
+    [xgboost] trial 20/30  this=20.00%  best=72.00%  ram_free=1.3gb
+    [xgboost] trial 21/30  this=42.03%  best=72.00%  ram_free=1.4gb
+    [xgboost] trial 22/30  this=70.09%  best=72.00%  ram_free=1.4gb
+    [xgboost] trial 23/30  this=69.27%  best=72.00%  ram_free=1.4gb
+    [xgboost] trial 24/30  this=70.41%  best=72.00%  ram_free=1.5gb
+    [xgboost] trial 25/30  this=70.64%  best=72.00%  ram_free=1.5gb
+    [xgboost] trial 26/30  this=54.43%  best=72.00%  ram_free=1.5gb
+    [xgboost] trial 27/30  this=70.15%  best=72.00%  ram_free=1.3gb
+    [xgboost] trial 28/30  this=71.08%  best=72.00%  ram_free=1.5gb
+    [xgboost] trial 29/30  this=22.71%  best=72.00%  ram_free=1.5gb
+    [xgboost] trial 30/30  this=16.41%  best=72.00%  ram_free=1.7gb
+[tune] xgboost: best val PR-AUC 72.00%
+[tune] xgboost: best params {'max_depth': 7, 'learning_rate': 0.11666308941364116, 'subsample': 0.8235194332173258, 'colsample_bytree': 0.9968628066217436, 'min_child_weight': 139, 'reg_lambda': 3.8436995640037885, 'gamma': 0.20082077995919723, 'recency_half_life_days': 180}
+
+[tune] catboost: 740,467 search rows (10489 frauds), scored on 713,197 full val rows
+    [catboost] trial 1/30  this=27.68%  best=27.68%  ram_free=1.7gb
+    [catboost] trial 2/30  this=31.02%  best=31.02%  ram_free=1.6gb
