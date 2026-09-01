@@ -1,0 +1,11 @@
+[train] train (7310269, 14), 10,489 frauds (0.1435%)
+[train] val   (713197, 14), 1,243 frauds
+[train]   val_fit 427,918 rows (688 frauds) -- early stopping, blend weights, calibration
+[train]   val_sel 285,279 rows (555 frauds) -- held back for threshold selection
+[train] fitting xgboost (0.5gb RAM free)
+[train] xgboost: using tuned params (search val PR-AUC 72.00%)
+[train] xgboost: recency half-life 180 days (a fraud that old counts half as much as one today)
+[train] xgboost    val PR-AUC 70.49%  ROC-AUC 99.53%  (161s)
+[train] fitting catboost (1.5gb RAM free)
+[train] catboost: using tuned params (search val PR-AUC 61.90%)
+[train] catboost: recency half-life 180 days (a fraud that old counts half as much as one today)

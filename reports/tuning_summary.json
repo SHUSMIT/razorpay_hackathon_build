@@ -1,0 +1,38 @@
+{
+  "xgboost": {
+    "best_val_pr_auc": 0.7199815329372944,
+    "best_params": {
+      "max_depth": 7,
+      "learning_rate": 0.11666308941364116,
+      "subsample": 0.8235194332173258,
+      "colsample_bytree": 0.9968628066217436,
+      "min_child_weight": 139,
+      "reg_lambda": 3.8436995640037885,
+      "gamma": 0.20082077995919723,
+      "recency_half_life_days": 180
+    }
+  },
+  "catboost": {
+    "best_val_pr_auc": 0.6190342006477624,
+    "best_params": {
+      "depth": 8,
+      "learning_rate": 0.026291393834472376,
+      "l2_leaf_reg": 5.8183612658465025,
+      "random_strength": 0.007257567800266579,
+      "bagging_temperature": 0.24007849287373728,
+      "iterations": 350,
+      "recency_half_life_days": 180
+    }
+  },
+  "histgb": {
+    "best_val_pr_auc": 0.6674120976225516,
+    "best_params": {
+      "learning_rate": 0.16190502151392971,
+      "max_leaf_nodes": 19,
+      "min_samples_leaf": 22,
+      "l2_regularization": 3.216059419290698,
+      "max_iter": 468,
+      "recency_half_life_days": 180
+    }
+  }
+}

@@ -78,3 +78,33 @@
     [histgb] trial 6/30  this=28.61%  best=49.81%  ram_free=1.2gb
     [histgb] trial 7/30  this=38.55%  best=49.81%  ram_free=1.2gb
     [histgb] trial 8/30  this=66.74%  best=66.74%  ram_free=1.2gb
+    [histgb] trial 9/30  this=37.38%  best=66.74%  ram_free=1.2gb
+    [histgb] trial 10/30  this=63.99%  best=66.74%  ram_free=1.1gb
+    [histgb] trial 11/30  this=62.93%  best=66.74%  ram_free=1.2gb
+    [histgb] trial 12/30  this=65.40%  best=66.74%  ram_free=1.2gb
+    [histgb] trial 13/30  this=64.61%  best=66.74%  ram_free=1.2gb
+    [histgb] trial 14/30  this=65.98%  best=66.74%  ram_free=1.1gb
+    [histgb] trial 15/30  this=65.96%  best=66.74%  ram_free=1.1gb
+    [histgb] trial 16/30  this=41.62%  best=66.74%  ram_free=1.1gb
+    [histgb] trial 17/30  this=48.30%  best=66.74%  ram_free=1.2gb
+    [histgb] trial 18/30  this=65.92%  best=66.74%  ram_free=1.3gb
+    [histgb] trial 19/30  this=64.51%  best=66.74%  ram_free=1.3gb
+    [histgb] trial 20/30  this=65.03%  best=66.74%  ram_free=1.3gb
+    [histgb] trial 21/30  this=38.57%  best=66.74%  ram_free=1.5gb
+    [histgb] trial 22/30  this=66.18%  best=66.74%  ram_free=1.5gb
+    [histgb] trial 23/30  this=66.61%  best=66.74%  ram_free=1.4gb
+    [histgb] trial 24/30  this=64.35%  best=66.74%  ram_free=1.4gb
+    [histgb] trial 25/30  this=64.78%  best=66.74%  ram_free=1.4gb
+    [histgb] trial 26/30  this=55.79%  best=66.74%  ram_free=1.5gb
+    [histgb] trial 27/30  this=46.85%  best=66.74%  ram_free=1.5gb
+    [histgb] trial 28/30  this=66.24%  best=66.74%  ram_free=1.5gb
+    [histgb] trial 29/30  this=62.83%  best=66.74%  ram_free=1.5gb
+    [histgb] trial 30/30  this=51.96%  best=66.74%  ram_free=1.4gb
+[tune] histgb: best val PR-AUC 66.74%
+[tune] histgb: best params {'learning_rate': 0.16190502151392971, 'max_leaf_nodes': 19, 'min_samples_leaf': 22, 'l2_regularization': 3.216059419290698, 'max_iter': 468, 'recency_half_life_days': 180}
+
+[tune] summary (validation PR-AUC, search on 10% of train)
+    xgboost    72.00%
+    histgb     66.74%
+    catboost   61.90%
+[tune] wrote reports/tuning_summary.json

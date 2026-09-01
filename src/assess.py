@@ -190,6 +190,39 @@ def main() -> None:
             print("    -> NOT a statistically significant improvement. "
                   "Reported as such.")
 
+    # ---- 5. the 1% check set: a SECOND, even fresher held-out period ----
+    # test ends 2019-09; this is the month after it. Nothing in the pipeline has
+    # seen it, and it is reported separately rather than merged into test, so it
+    # works as an independent confirmation that the test number was not luck.
+    demo_block = {}
+    try:
+        p_demo, y_demo = _predict_all("demo", cats, weights)
+        a_demo = _amounts("demo")
+        dp = cal.predict(p_demo[shipped]) if shipped in p_demo else None
+        if dp is not None and y_demo.sum() > 0:
+            dm = core_metrics(y_demo, dp, 0.5)
+            dcost = cost_at(y_demo, dp, a_demo, t_block)
+            dbase = float(y_demo.mean())
+            demo_block = {"rows": int(len(y_demo)), "frauds": int(y_demo.sum()),
+                          "base_rate": dbase, "pr_auc": dm["pr_auc"],
+                          "roc_auc": dm["roc_auc"],
+                          "cost_at_selected_threshold": dcost}
+            print("")
+            print("[assess] 1% check set (the month AFTER test, never touched)")
+            print(f"    {len(y_demo):,} transactions, {int(y_demo.sum()):,} frauds "
+                  f"({pct(dbase, 3)})")
+            print(f"    PR-AUC {pct(dm['pr_auc'])}  "
+                  f"(test was {pct(results[shipped]['pr_auc'])})")
+            print(f"    at the shipped threshold: precision "
+                  f"{pct(dcost['precision'])}  recall {pct(dcost['recall'])}")
+            gap = dm["pr_auc"] - results[shipped]["pr_auc"]
+            if abs(gap) > 0.15:
+                print(f"    NOTE: {signed_pct(gap)} away from the test result -- "
+                      f"a gap that size means the operating point is not stable "
+                      f"across adjacent months.")
+    except FileNotFoundError:
+        print("[assess] no demo split found -- skipping the 1% check")
+
     plot_pr_curve(y_test, shipped_p, REPORTS / "pr_curve.png",
                   f"Precision-Recall - {shipped}, held-out test")
     plot_cost_curve(sweep_test, best, nothing, REPORTS / "cost_curve.png")
@@ -208,6 +241,7 @@ def main() -> None:
         "review_band": [review_lo, t_block], "ensemble_weights": weights,
         "ensemble_vs_best_single": cmp_block,
         "test_rows": int(len(y_test)), "test_frauds": int(y_test.sum()),
+        "check_set": demo_block,
     }
     (REPORTS / "assessment.json").write_text(
         json.dumps(payload, indent=2, default=float), encoding="utf-8")

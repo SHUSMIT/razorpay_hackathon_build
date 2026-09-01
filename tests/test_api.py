@@ -10,10 +10,17 @@ import json
 
 import pytest
 
+from src.config import SERVING_CONFIG
 from src.models import available
 
+# The service needs BOTH trained models and a serving config (thresholds are
+# written by assess.py). Mid-pipeline the models exist but the config does not,
+# so check for both -- otherwise these error instead of skipping, which hides
+# whether anything is genuinely broken.
+_READY = bool(available()) and SERVING_CONFIG.exists()
 pytestmark = pytest.mark.skipif(
-    not available(), reason="no trained models yet -- run `python run.py train`")
+    not _READY,
+    reason="pipeline not complete yet -- run `python run.py all`")
 
 FULL = {"amount": 142.50, "date": "2019-06-14T02:31:00",
         "use_chip": "Online Transaction", "mcc": 5812, "credit_limit": 12000.0,

@@ -104,6 +104,21 @@ def build_block() -> str:
                          f"{pct(mm.get('roc_auc'))} |")
         lines.append("")
 
+    chk = a.get("check_set") or {}
+    if chk:
+        lines.append("**Independent 1% check set** — the month *after* the test "
+                     "period, never touched by any stage of the pipeline:")
+        lines.append("")
+        lines.append("| | Check set |")
+        lines.append("|---|---|")
+        lines.append(f"| Transactions | {chk.get('rows', 0):,} "
+                     f"({chk.get('frauds', 0):,} fraud) |")
+        lines.append(f"| PR-AUC | {pct(chk.get('pr_auc'))} |")
+        c = chk.get("cost_at_selected_threshold", {})
+        lines.append(f"| Recall at the shipped threshold | {pct(c.get('recall'))} |")
+        lines.append(f"| Precision at the shipped threshold | {pct(c.get('precision'))} |")
+        lines.append("")
+
     cmp_ = a.get("ensemble_vs_best_single") or {}
     if cmp_:
         verdict = ("a statistically significant improvement"

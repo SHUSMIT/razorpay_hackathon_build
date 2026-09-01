@@ -1,0 +1,380 @@
+{
+  "model": "histgb",
+  "best_params": {
+    "learning_rate": 0.16190502151392971,
+    "max_leaf_nodes": 19,
+    "min_samples_leaf": 22,
+    "l2_regularization": 3.216059419290698,
+    "max_iter": 468,
+    "recency_half_life_days": 180
+  },
+  "best_val_pr_auc": 0.6674120976225516,
+  "n_trials": 30,
+  "subsample_frac": 0.1,
+  "subsample_rows": 740467,
+  "subsample_frauds": 10489,
+  "val_rows": 713197,
+  "val_frauds": 1243,
+  "trial_history": [
+    {
+      "number": 0,
+      "value": 0.4981335556383437,
+      "params": {
+        "learning_rate": 0.05514718587869894,
+        "max_leaf_nodes": 61,
+        "min_samples_leaf": 372,
+        "l2_regularization": 0.37570597138026446,
+        "max_iter": 220,
+        "recency_half_life_days": 365
+      }
+    },
+    {
+      "number": 1,
+      "value": 0.44357964772005964,
+      "params": {
+        "learning_rate": 0.021146536167031597,
+        "max_leaf_nodes": 62,
+        "min_samples_leaf": 420,
+        "l2_regularization": 0.00818986766421478,
+        "max_iter": 232,
+        "recency_half_life_days": 365
+      }
+    },
+    {
+      "number": 2,
+      "value": 0.37810837458825136,
+      "params": {
+        "learning_rate": 0.10486361783805698,
+        "max_leaf_nodes": 15,
+        "min_samples_leaf": 160,
+        "l2_regularization": 0.037647251670546285,
+        "max_iter": 355,
+        "recency_half_life_days": 0
+      }
+    },
+    {
+      "number": 3,
+      "value": 0.4050491234768366,
+      "params": {
+        "learning_rate": 0.10364734587283783,
+        "max_leaf_nodes": 17,
+        "min_samples_leaf": 51,
+        "l2_regularization": 12.055498078944888,
+        "max_iter": 585,
+        "recency_half_life_days": 0
+      }
+    },
+    {
+      "number": 4,
+      "value": 0.25649349594787835,
+      "params": {
+        "learning_rate": 0.027832876780755886,
+        "max_leaf_nodes": 35,
+        "min_samples_leaf": 36,
+        "l2_regularization": 8.14731157122018,
+        "max_iter": 266,
+        "recency_half_life_days": 0
+      }
+    },
+    {
+      "number": 5,
+      "value": 0.2861421966817128,
+      "params": {
+        "learning_rate": 0.27628035240548837,
+        "max_leaf_nodes": 51,
+        "min_samples_leaf": 471,
+        "l2_regularization": 7.057961339161952,
+        "max_iter": 419,
+        "recency_half_life_days": 0
+      }
+    },
+    {
+      "number": 6,
+      "value": 0.38554796127076635,
+      "params": {
+        "learning_rate": 0.05729938473542885,
+        "max_leaf_nodes": 23,
+        "min_samples_leaf": 418,
+        "l2_regularization": 0.03422998896745789,
+        "max_iter": 276,
+        "recency_half_life_days": 1095
+      }
+    },
+    {
+      "number": 7,
+      "value": 0.6674120976225516,
+      "params": {
+        "learning_rate": 0.16190502151392971,
+        "max_leaf_nodes": 19,
+        "min_samples_leaf": 22,
+        "l2_regularization": 3.216059419290698,
+        "max_iter": 468,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 8,
+      "value": 0.37380222952938763,
+      "params": {
+        "learning_rate": 0.20707057549315308,
+        "max_leaf_nodes": 42,
+        "min_samples_leaf": 179,
+        "l2_regularization": 0.0018765769217968405,
+        "max_iter": 290,
+        "recency_half_life_days": 730
+      }
+    },
+    {
+      "number": 9,
+      "value": 0.6399369884791241,
+      "params": {
+        "learning_rate": 0.027649274676728182,
+        "max_leaf_nodes": 47,
+        "min_samples_leaf": 385,
+        "l2_regularization": 0.25945979022901,
+        "max_iter": 497,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 10,
+      "value": 0.6293481400986957,
+      "params": {
+        "learning_rate": 0.1394691874349947,
+        "max_leaf_nodes": 8,
+        "min_samples_leaf": 269,
+        "l2_regularization": 0.7711653768516806,
+        "max_iter": 165,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 11,
+      "value": 0.6539557338967791,
+      "params": {
+        "learning_rate": 0.04318741357678273,
+        "max_leaf_nodes": 31,
+        "min_samples_leaf": 294,
+        "l2_regularization": 0.5869860616948758,
+        "max_iter": 515,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 12,
+      "value": 0.6461273821678694,
+      "params": {
+        "learning_rate": 0.050050459827392764,
+        "max_leaf_nodes": 31,
+        "min_samples_leaf": 251,
+        "l2_regularization": 1.7609933046006816,
+        "max_iter": 498,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 13,
+      "value": 0.6598109040061075,
+      "params": {
+        "learning_rate": 0.07891127730965983,
+        "max_leaf_nodes": 29,
+        "min_samples_leaf": 128,
+        "l2_regularization": 1.8966205243541714,
+        "max_iter": 489,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 14,
+      "value": 0.6596026999085554,
+      "params": {
+        "learning_rate": 0.08623279970382132,
+        "max_leaf_nodes": 21,
+        "min_samples_leaf": 113,
+        "l2_regularization": 4.671237059653552,
+        "max_iter": 415,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 15,
+      "value": 0.41617268329358464,
+      "params": {
+        "learning_rate": 0.17450662329452624,
+        "max_leaf_nodes": 27,
+        "min_samples_leaf": 100,
+        "l2_regularization": 2.1190268465357507,
+        "max_iter": 598,
+        "recency_half_life_days": 1095
+      }
+    },
+    {
+      "number": 16,
+      "value": 0.4830056364627043,
+      "params": {
+        "learning_rate": 0.07711146874796654,
+        "max_leaf_nodes": 9,
+        "min_samples_leaf": 193,
+        "l2_regularization": 0.10919363237550785,
+        "max_iter": 434,
+        "recency_half_life_days": 730
+      }
+    },
+    {
+      "number": 17,
+      "value": 0.6592304666726108,
+      "params": {
+        "learning_rate": 0.14054974219503164,
+        "max_leaf_nodes": 40,
+        "min_samples_leaf": 77,
+        "l2_regularization": 1.963984206076292,
+        "max_iter": 543,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 18,
+      "value": 0.6451209779700608,
+      "params": {
+        "learning_rate": 0.254254722202209,
+        "max_leaf_nodes": 16,
+        "min_samples_leaf": 127,
+        "l2_regularization": 16.313188282802788,
+        "max_iter": 357,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 19,
+      "value": 0.6502999494259388,
+      "params": {
+        "learning_rate": 0.1352939730718659,
+        "max_leaf_nodes": 25,
+        "min_samples_leaf": 20,
+        "l2_regularization": 0.12843498507073173,
+        "max_iter": 466,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 20,
+      "value": 0.38574322726983207,
+      "params": {
+        "learning_rate": 0.07630404692375958,
+        "max_leaf_nodes": 36,
+        "min_samples_leaf": 221,
+        "l2_regularization": 3.255170044341331,
+        "max_iter": 379,
+        "recency_half_life_days": 1095
+      }
+    },
+    {
+      "number": 21,
+      "value": 0.6617588396358619,
+      "params": {
+        "learning_rate": 0.07944471244757396,
+        "max_leaf_nodes": 21,
+        "min_samples_leaf": 116,
+        "l2_regularization": 4.611461659646694,
+        "max_iter": 439,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 22,
+      "value": 0.666078074869825,
+      "params": {
+        "learning_rate": 0.03806499142519574,
+        "max_leaf_nodes": 19,
+        "min_samples_leaf": 141,
+        "l2_regularization": 0.8884223791260669,
+        "max_iter": 465,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 23,
+      "value": 0.6435343717137406,
+      "params": {
+        "learning_rate": 0.03603542902375282,
+        "max_leaf_nodes": 20,
+        "min_samples_leaf": 73,
+        "l2_regularization": 0.8588803694934339,
+        "max_iter": 451,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 24,
+      "value": 0.6478142439581962,
+      "params": {
+        "learning_rate": 0.03611858896040112,
+        "max_leaf_nodes": 12,
+        "min_samples_leaf": 157,
+        "l2_regularization": 4.730274040379023,
+        "max_iter": 545,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 25,
+      "value": 0.5579336747056678,
+      "params": {
+        "learning_rate": 0.1833276279669163,
+        "max_leaf_nodes": 19,
+        "min_samples_leaf": 74,
+        "l2_regularization": 0.9997570337754532,
+        "max_iter": 392,
+        "recency_half_life_days": 365
+      }
+    },
+    {
+      "number": 26,
+      "value": 0.46854214988359993,
+      "params": {
+        "learning_rate": 0.06549204797058747,
+        "max_leaf_nodes": 13,
+        "min_samples_leaf": 205,
+        "l2_regularization": 0.29721718928587054,
+        "max_iter": 340,
+        "recency_half_life_days": 730
+      }
+    },
+    {
+      "number": 27,
+      "value": 0.6624025196099269,
+      "params": {
+        "learning_rate": 0.10627002648703167,
+        "max_leaf_nodes": 24,
+        "min_samples_leaf": 141,
+        "l2_regularization": 16.946875629269318,
+        "max_iter": 463,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 28,
+      "value": 0.6283119597597951,
+      "params": {
+        "learning_rate": 0.11014178090449943,
+        "max_leaf_nodes": 23,
+        "min_samples_leaf": 316,
+        "l2_regularization": 18.017832265231036,
+        "max_iter": 552,
+        "recency_half_life_days": 180
+      }
+    },
+    {
+      "number": 29,
+      "value": 0.51964050725994,
+      "params": {
+        "learning_rate": 0.21660713011050753,
+        "max_leaf_nodes": 27,
+        "min_samples_leaf": 151,
+        "l2_regularization": 9.38819070934967,
+        "max_iter": 470,
+        "recency_half_life_days": 365
+      }
+    }
+  ]
+}
