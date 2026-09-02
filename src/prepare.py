@@ -344,7 +344,11 @@ def main() -> None:
         part[cols].to_parquet(path, index=False)
         print(f"[prep] wrote {path}  {part[cols].shape}")
 
-    with open(DATA_PROCESSED / "agg_stats.json", "w", encoding="utf-8") as fh:
+    # Into models/, not data/processed/: the API needs these at serving time
+    # and data/processed is gitignored.
+    from src.config import MODELS
+
+    with open(MODELS / "agg_stats.json", "w", encoding="utf-8") as fh:
         json.dump({"global_median": stats["global_median"],
                    "mcc_median": stats["mcc_median"]}, fh)
 

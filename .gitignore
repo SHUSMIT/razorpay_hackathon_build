@@ -6,13 +6,24 @@ data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+# The 1% demo slice IS committed (2.5MB): without it a fresh clone has nothing
+# to score, and the dashboard's Live Score tab is the first thing anyone opens.
+!data/processed/demo.parquet
 
 # Model artefacts (~1.1MB) and reports (~700KB) ARE committed on purpose:
 # they are the evidence a reviewer reads, and they let a fresh clone start the
 # API and the UI without first sitting through a 20-minute Optuna run.
 # Only the two regenerable, noisy artefacts are excluded:
 reports/audit_log.jsonl
-reports/optuna_study.db
+reports/review_queue.jsonl
+reports/optuna.db
+reports/*.log
+reports/*_log.txt
+
+# Validation predictions are per-run training checkpoints (17MB). They make a
+# retrain resumable but are not needed to serve, and they go stale the moment
+# a model is refitted.
+models/val_preds/
 
 # python
 __pycache__/

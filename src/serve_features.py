@@ -19,12 +19,16 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from src.config import DATA_PROCESSED, MODELS
+from src.config import MODELS
 from src.data import load_categories
 from src.schema import CATEGORICAL, FEATURES, NUMERIC
 
 MCC_CODES = MODELS / "mcc_codes.json"
-AGG_STATS = DATA_PROCESSED / "agg_stats.json"
+# Written by prepare.py into models/ because the SERVICE needs it: the
+# per-category medians behind amount_vs_mcc_median. data/processed is
+# gitignored, so keeping it there meant a fresh clone silently served
+# without them.
+AGG_STATS = MODELS / "agg_stats.json"
 
 
 def _load_json(path, default):
