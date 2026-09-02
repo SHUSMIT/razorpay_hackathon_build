@@ -30,35 +30,35 @@ three, in money.
 ## Results
 
 <!-- RESULTS:START -->
-**Shipped model: `ensemble`**, selected on validation and evaluated once on a held-out test split of 802,346 transactions containing 1,409 frauds (0.176% of traffic).
+**Shipped model: `xgboost`**, selected on validation and evaluated once on a held-out test split of 802,346 transactions containing 1,409 frauds (0.176% of traffic).
 
 | Metric | Held-out test |
 |---|---|
-| PR-AUC | **75.93%** (95% CI 74.08% – 77.83%) |
-| Lift over random | 432x |
-| ROC-AUC | 99.81% |
-| Fraud caught (recall) | 65.86% |
-| Blocks that were fraud (precision) | 71.77% |
-| Legitimate traffic blocked | 0.161% |
+| PR-AUC | **75.99%** (95% CI 74.11% – 77.94%) |
+| Lift over random | 433x |
+| ROC-AUC | 99.78% |
+| Fraud caught (recall) | 69.06% |
+| Blocks that were fraud (precision) | 69.70% |
+| Legitimate traffic blocked | 0.174% |
 
 **Cost outcome.** A missed fraud costs the merchant the full transaction amount; a wrongly blocked customer costs a flat 50 in support and lost goodwill.
 
 | | Cost on the test split |
 |---|---|
 | Do nothing | 132,543 |
-| This service | 63,940 |
-| **Avoided** | **68,603** (51.8%) |
+| This service | 61,738 |
+| **Avoided** | **70,806** (53.4%) |
 
-Operating point: block at **62.00%**, human review from **24.26%**. Both chosen on a slice of validation that the models, the blend weights and the calibrator never saw.
+Operating point: block at **56.00%**, human review from **24.11%**. Both chosen on a slice of validation that the models, the blend weights and the calibrator never saw.
 
-For honesty: picking the threshold on the test split itself would have looked 530 better. That is selection bias, and it is not used.
+For honesty: picking the threshold on the test split itself would have looked 375 better. That is selection bias, and it is not used.
 
 **All candidates on the held-out split**
 
 | Model | PR-AUC | ROC-AUC |
 |---|---|---|
-| xgboost | 75.99% | 99.78% |
-| ensemble (shipped) | 75.93% | 99.81% |
+| xgboost (shipped) | 75.99% | 99.78% |
+| ensemble | 75.93% | 99.81% |
 | histgb | 72.40% | 99.61% |
 | catboost | 66.97% | 99.68% |
 
@@ -67,13 +67,13 @@ For honesty: picking the threshold on the test split itself would have looked 53
 | | Check set |
 |---|---|
 | Transactions | 89,151 (191 fraud) |
-| PR-AUC | 76.14% |
-| Recall at the shipped threshold | 68.59% |
-| Precision at the shipped threshold | 67.18% |
+| PR-AUC | 75.31% |
+| Recall at the shipped threshold | 71.20% |
+| Precision at the shipped threshold | 65.38% |
 
 The blend is **not** a statistically significant improvement over the best single model (`xgboost`): paired bootstrap delta -0.06%, 95% CI -0.50% – 0.36%.
 
-Scores are isotonic-calibrated: expected calibration error 0.6540% → 0.0032% on held-back validation.
+Scores are isotonic-calibrated: expected calibration error 0.5889% → 0.0029% on held-back validation.
 
 > `xgboost` training weights halve every 60 days (effective sample size 2,000 rows).
 

@@ -1,6 +1,8 @@
 {
   "model_version": "frm-1.0.0",
-  "shipped": "ensemble",
+  "shipped": "xgboost",
+  "best_on_val_fit": "ensemble",
+  "shipped_by_override": true,
   "selected_on": "val_fit",
   "threshold_selected_on": "val_sel",
   "val_fit_pr_auc": {
@@ -31,18 +33,18 @@
         "n_boot": 500
       },
       "cost_at_selected_threshold": {
-        "threshold": 0.62,
-        "tp": 1276,
-        "fp": 1924,
-        "fn": 133,
-        "fn_cost": 8985.579993061721,
-        "fp_cost": 96200.0,
-        "total_cost": 105185.57999306172,
-        "precision": 0.39875,
-        "recall": 0.9056068133427964,
-        "block_rate": 0.00398830429764715
+        "threshold": 0.56,
+        "tp": 973,
+        "fp": 423,
+        "fn": 436,
+        "fn_cost": 40587.620020957664,
+        "fp_cost": 21150.0,
+        "total_cost": 61737.620020957664,
+        "precision": 0.6969914040114613,
+        "recall": 0.6905606813342796,
+        "block_rate": 0.001739897749848569
       },
-      "calibrated_for_serving": false
+      "calibrated_for_serving": true
     },
     "catboost": {
       "threshold": 0.5,
@@ -65,16 +67,16 @@
         "n_boot": 500
       },
       "cost_at_selected_threshold": {
-        "threshold": 0.62,
-        "tp": 1306,
-        "fp": 3101,
-        "fn": 103,
-        "fn_cost": 7974.999985553324,
-        "fp_cost": 155050.0,
-        "total_cost": 163024.99998555332,
-        "precision": 0.29634672112548216,
-        "recall": 0.9268985095812633,
-        "block_rate": 0.005492642824915934
+        "threshold": 0.56,
+        "tp": 1318,
+        "fp": 3331,
+        "fn": 91,
+        "fn_cost": 6926.069989778101,
+        "fp_cost": 166550.0,
+        "total_cost": 173476.0699897781,
+        "precision": 0.28350182835018284,
+        "recall": 0.9354151880766501,
+        "block_rate": 0.0057942583374255
       },
       "calibrated_for_serving": false
     },
@@ -99,16 +101,16 @@
         "n_boot": 500
       },
       "cost_at_selected_threshold": {
-        "threshold": 0.62,
-        "tp": 1190,
-        "fp": 1578,
-        "fn": 219,
-        "fn_cost": 19178.900025028735,
-        "fp_cost": 78900.0,
-        "total_cost": 98078.90002502874,
-        "precision": 0.42991329479768786,
-        "recall": 0.8445706174591909,
-        "block_rate": 0.0034498832174647844
+        "threshold": 0.56,
+        "tp": 1201,
+        "fp": 1771,
+        "fn": 208,
+        "fn_cost": 17575.740011114627,
+        "fp_cost": 88550.0,
+        "total_cost": 106125.74001111463,
+        "precision": 0.40410497981157467,
+        "recall": 0.8523775727466288,
+        "block_rate": 0.0037041376164397904
       },
       "calibrated_for_serving": false
     },
@@ -133,25 +135,25 @@
         "n_boot": 500
       },
       "cost_at_selected_threshold": {
-        "threshold": 0.62,
-        "tp": 928,
-        "fp": 365,
-        "fn": 481,
-        "fn_cost": 45690.22000655718,
-        "fp_cost": 18250.0,
-        "total_cost": 63940.22000655718,
-        "precision": 0.7177107501933488,
-        "recall": 0.6586231369765791,
-        "block_rate": 0.0016115242052680515
+        "threshold": 0.56,
+        "tp": 1298,
+        "fp": 2165,
+        "fn": 111,
+        "fn_cost": 7317.989996634424,
+        "fp_cost": 108250.0,
+        "total_cost": 115567.98999663442,
+        "precision": 0.374819520646838,
+        "recall": 0.9212207239176721,
+        "block_rate": 0.004316093057110025
       },
-      "calibrated_for_serving": true
+      "calibrated_for_serving": false
     }
   },
   "test_random_baseline": 0.0017561002360577606,
   "calibration": {
     "method": "isotonic",
-    "ece_before": 0.006540373728576758,
-    "ece_after": 3.1911717459463286e-05
+    "ece_before": 0.005888692963988434,
+    "ece_after": 2.87185719128405e-05
   },
   "cost_model": {
     "fp_cost_per_block": 50.0,
@@ -159,34 +161,34 @@
     "chargeback_fee": 0.0
   },
   "cost_optimal": {
-    "threshold": 0.62,
-    "tp": 928,
-    "fp": 365,
-    "fn": 481,
-    "fn_cost": 45690.22000655718,
-    "fp_cost": 18250.0,
-    "total_cost": 63940.22000655718,
-    "precision": 0.7177107501933488,
-    "recall": 0.6586231369765791,
-    "block_rate": 0.0016115242052680515
+    "threshold": 0.56,
+    "tp": 973,
+    "fp": 423,
+    "fn": 436,
+    "fn_cost": 40587.620020957664,
+    "fp_cost": 21150.0,
+    "total_cost": 61737.620020957664,
+    "precision": 0.6969914040114613,
+    "recall": 0.6905606813342796,
+    "block_rate": 0.001739897749848569
   },
   "cost_oracle_test_argmin": {
-    "threshold": 0.53,
-    "tp": 963.0,
-    "fp": 422.0,
-    "fn": 446.0,
-    "fn_cost": 42309.83001277037,
-    "fp_cost": 21100.0,
-    "total_cost": 63409.83001277037,
-    "precision": 0.6953068592057762,
-    "recall": 0.6834634492547906,
-    "block_rate": 0.001726187953825407
+    "threshold": 0.62,
+    "tp": 954.0,
+    "fp": 379.0,
+    "fn": 455.0,
+    "fn_cost": 42412.51000943966,
+    "fp_cost": 18950.0,
+    "total_cost": 61362.51000943966,
+    "precision": 0.7156789197299325,
+    "recall": 0.6770759403832506,
+    "block_rate": 0.0016613780089886408
   },
-  "selection_bias": 530.3899937868118,
+  "selection_bias": 375.11001151800156,
   "do_nothing_cost": 132543.13022353314,
   "review_band": [
-    0.242587,
-    0.62
+    0.24109,
+    0.56
   ],
   "ensemble_weights": {
     "xgboost": 0.8,
@@ -208,19 +210,19 @@
     "rows": 89151,
     "frauds": 191,
     "base_rate": 0.002142432502159258,
-    "pr_auc": 0.7613600922269728,
-    "roc_auc": 0.9992982315718105,
+    "pr_auc": 0.753137705114695,
+    "roc_auc": 0.9992430858977739,
     "cost_at_selected_threshold": {
-      "threshold": 0.62,
-      "tp": 131,
-      "fp": 64,
-      "fn": 60,
-      "fn_cost": 6311.45997607708,
-      "fp_cost": 3200.0,
-      "total_cost": 9511.45997607708,
-      "precision": 0.6717948717948717,
-      "recall": 0.6858638743455497,
-      "block_rate": 0.0021873001985395564
+      "threshold": 0.56,
+      "tp": 136,
+      "fp": 72,
+      "fn": 55,
+      "fn_cost": 5865.709960818291,
+      "fp_cost": 3600.0,
+      "total_cost": 9465.70996081829,
+      "precision": 0.6538461538461539,
+      "recall": 0.7120418848167539,
+      "block_rate": 0.002333120211775527
     }
   }
 }

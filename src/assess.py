@@ -20,6 +20,7 @@ silently moves. Everything below is calibrated before any threshold is touched.
 from __future__ import annotations
 
 import json
+import os
 
 import numpy as np
 from sklearn.metrics import average_precision_score
@@ -107,10 +108,34 @@ def main() -> None:
     # ---- 1. which model ships, decided on val_fit ----
     fit_scores = {n: float(average_precision_score(y_fit, p[:cut]))
                   for n, p in p_val.items()}
-    shipped = max(fit_scores, key=fit_scores.get)
+    best_on_val = max(fit_scores, key=fit_scores.get)
+
+    # FRM_SHIP_MODEL pins the served model for reasons validation cannot see --
+    # inference cost, operational simplicity, one artefact instead of three.
+    # That is a legitimate engineering choice, but it must be a DELIBERATE one,
+    # so it is an explicit override rather than a silent default, and the model
+    # it displaces is named in the log.
+    pinned = os.environ.get("FRM_SHIP_MODEL")
+    if pinned and pinned in fit_scores:
+        shipped = pinned
+    else:
+        if pinned:
+            print(f"[assess] WARNING: FRM_SHIP_MODEL={pinned!r} is not an "
+                  f"available candidate; falling back to the val_fit winner")
+        shipped = best_on_val
+
     print("\n[assess] PR-AUC on val_fit (this is what selects the model)")
     for n, s in sorted(fit_scores.items(), key=lambda kv: -kv[1]):
-        print(f"    {n:<10} {pct(s):>8}" + ("  <-- shipped" if n == shipped else ""))
+        tag = "  <-- shipped" if n == shipped else ""
+        if n == best_on_val and n != shipped:
+            tag = "  (best on val_fit, not shipped)"
+        print(f"    {n:<10} {pct(s):>8}{tag}")
+    if shipped != best_on_val:
+        print(f"[assess] shipping '{shipped}' by explicit override rather than "
+              f"'{best_on_val}', which scored {pct(fit_scores[best_on_val])} "
+              f"against {pct(fit_scores[shipped])} on val_fit. Everything "
+              f"downstream -- calibrator, threshold, review band -- is refitted "
+              f"for the model actually being served.")
 
     # ---- 2. calibrate the shipped scorer on val_fit ----
     cal = Calibration.fit(p_val[shipped][:cut], y_fit)
@@ -241,6 +266,8 @@ def main() -> None:
 
     payload = {
         "model_version": MODEL_VERSION, "shipped": shipped,
+        "best_on_val_fit": best_on_val,
+        "shipped_by_override": bool(shipped != best_on_val),
         "selected_on": "val_fit", "threshold_selected_on": "val_sel",
         "val_fit_pr_auc": fit_scores, "test": results,
         "test_random_baseline": baseline,
@@ -260,7 +287,10 @@ def main() -> None:
     sweep_test.to_csv(REPORTS / "threshold_sweep.csv", index=False)
 
     SERVING_CONFIG.write_text(json.dumps({
-        "shipped_model": shipped, "ensemble_weights": weights,
+        "shipped_model": shipped,
+        # Only meaningful when the shipped model IS the ensemble; kept so the
+        # blend is reproducible either way.
+        "ensemble_weights": weights,
         "block_threshold": t_block, "review_threshold": review_lo,
         "fp_cost": FP_COST, "model_version": MODEL_VERSION,
         "expected_precision_at_block": best["precision"],
