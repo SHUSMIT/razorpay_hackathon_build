@@ -1,0 +1,97 @@
+[train] train (7310269, 14), 10,489 frauds (0.1435%)
+[train] val   (713197, 14), 1,243 frauds
+[train]   val_fit 427,918 rows (688 frauds) -- early stopping, blend weights, calibration
+[train]   val_sel 285,279 rows (555 frauds) -- held back for threshold selection
+[train] fitting xgboost (1.5gb RAM free)
+[train] xgboost: using tuned params (search val PR-AUC 72.00%)
+[train] xgboost: recency half-life 60 days (a fraud that old counts half as much as one today)
+[train] xgboost    val PR-AUC 79.09%  ROC-AUC 99.85%  (402s)
+[train] fitting catboost (2.2gb RAM free)
+[train] catboost: using tuned params (search val PR-AUC 61.90%)
+[train] catboost: recency half-life 60 days (a fraud that old counts half as much as one today)
+CatBoost is using more CPU RAM (2.68GiB) than the limit (2GiB)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+[train] catboost   val PR-AUC 71.67%  ROC-AUC 99.82%  (2152s)
+[train] fitting histgb (3.4gb RAM free)
+[train] histgb: using tuned params (search val PR-AUC 66.74%)
+[train] histgb: recency half-life 60 days (a fraud that old counts half as much as one today)
+[train] histgb     val PR-AUC 75.00%  ROC-AUC 99.57%  (57s)
+[ensemble] searched 66 weight combinations; best val PR-AUC 0.7950 with weights {'xgboost': 1.0, 'catboost': 0.0, 'histgb': 0.0}
+[train] calibration (isotonic, fitted on val_fit, measured on val_sel)
+    expected calibration error 0.6452% -> 0.0117%
+    PR-AUC 78.90% -> 78.74% (monotone map: ranking is unchanged by construction)
+
+[train] validation summary (random baseline PR-AUC = 0.00174)
+    xgboost    PR-AUC 0.7909  ROC-AUC 0.9985
+    ensemble   PR-AUC 0.7909  ROC-AUC 0.9985
+    histgb     PR-AUC 0.7500  ROC-AUC 0.9957
+    catboost   PR-AUC 0.7167  ROC-AUC 0.9982
+[train] ensemble does NOT improve on the best single model on val (+0.0000)
+[train] wrote reports/training_summary.json
+[assess] scoring validation
+[assess]   val_fit 427,918 rows (688 frauds) -- model choice + calibration
+[assess]   val_sel 285,279 rows (555 frauds) -- threshold selection
+
+[assess] PR-AUC on val_fit (this is what selects the model)
+    xgboost      79.50%  <-- shipped
+    ensemble     79.50%
+    histgb       75.02%
+    catboost     70.35%
+
+[assess] isotonic calibration for 'xgboost' (fitted on val_fit, measured on val_sel)
+    expected calibration error 0.6452% -> 0.0117%
+[assess] review band sized by capacity: score >= 24.13% sends 0.20% of traffic to a human (target 0.20%)
+
+[assess] scoring the held-out TEST split (first and only look)
+
+[assess] held-out test: 802,346 transactions, 1,409 frauds (0.176%)
+    PR-AUC 74.25%  (random baseline 0.176%, lift 423x)
+    ROC-AUC 99.30%
+
+[assess] cost model: FP=50 per wrong block, FN=actual amount
+    do nothing                               132,543
+    at threshold 56.00% (chosen on val_sel)         69,171
+    saves 63,372 (47.8% of avoidable loss)
+    precision 68.44%  recall 67.71%  fp=440  fn=455  block rate 0.174%
+    [reference] the test-argmin threshold 66.00% would give 68,439; choosing it on the very split we report would be worth 732 of selection bias. Not used.
+
+[assess] ensemble vs best single (xgboost) on test
+    xgboost    PR-AUC 74.25%
+    ensemble   PR-AUC 74.40%
+    paired delta +0.15%  95% CI [+0.10%, +0.20%]
+
+[assess] 1% check set (the month AFTER test, never touched)
+    89,151 transactions, 191 frauds (0.214%)
+    PR-AUC 74.43%  (test was 74.25%)
+    at the shipped threshold: precision 64.62%  recall 71.73%
+[eval] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\reports\pr_curve.png
+[eval] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\reports\cost_curve.png
+
+[assess] wrote reports/assessment.json and serving_config.json
+[assess] serving: xgboost  block at 56.00%  review from 24.13%
+[context] base rates weighted to match the model's 60-day recency half-life
+[context] reference = 7,299,780 legitimate TRAIN rows; overall fraud rate 0.0929%
+[context] use_chip: highest-risk levels -> Chip Transaction 0.11%, Swipe Transaction 0.06%, Online Transaction 0.01%
+[context] mcc_category: highest-risk levels -> Computers, Computer Peripheral Equipment 12.43%, Furniture, Home Furnishings, and Equipment Stores 11.40%, Steel Drums and Barrels 10.84%
+[context] card_brand: highest-risk levels -> Amex 0.18%, Discover 0.10%, Mastercard 0.10%
+[context] card_type: highest-risk levels -> Debit (Prepaid) 0.12%, Credit 0.11%, Debit 0.08%
+[context] error_kind: highest-risk levels -> Bad PIN 0.83%, Technical Glitch 0.16%, Insufficient Balance 0.15%
+[context] is_online: highest-risk levels -> yes 0.72%, no 0.00%
+[context] is_night: highest-risk levels -> no 0.10%, yes 0.00%
+[context] has_error: highest-risk levels -> yes 0.24%, no 0.09%
+[context] has_chip: highest-risk levels -> no 0.10%, yes 0.09%
+[context] fraud rate by score band (validation, out-of-sample)
+    [0.000, 0.001)  n=  698,688  frauds=   16  rate=0.00%
+    [0.001, 0.005)  n=   10,414  frauds=   32  rate=0.31%
+    [0.005, 0.020)  n=      402  frauds=    1  rate=0.25%
+    [0.020, 0.050)  n=      597  frauds=   16  rate=2.68%
+    [0.050, 0.100)  n=      414  frauds=   28  rate=6.76%
+    [0.100, 0.250)  n=    1,297  frauds=  219  rate=16.89%
+    [0.250, 0.500)  n=      163  frauds=   53  rate=32.52%
+    [0.500, 1.010)  n=    1,222  frauds=  878  rate=71.85%
+[context] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\models\feature_context.json
+CHAIN_COMPLETE

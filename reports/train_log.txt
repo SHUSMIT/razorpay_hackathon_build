@@ -5,3 +5,30 @@
 [train] fitting xgboost (1.5gb RAM free)
 [train] xgboost: using tuned params (search val PR-AUC 72.00%)
 [train] xgboost: recency half-life 60 days (a fraud that old counts half as much as one today)
+[train] xgboost    val PR-AUC 79.09%  ROC-AUC 99.85%  (402s)
+[train] fitting catboost (2.2gb RAM free)
+[train] catboost: using tuned params (search val PR-AUC 61.90%)
+[train] catboost: recency half-life 60 days (a fraud that old counts half as much as one today)
+CatBoost is using more CPU RAM (2.68GiB) than the limit (2GiB)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+Resource CPU RAM: functionWithResourceUsage.ResourceUsage(528244200) > ResourceQuota(0)
+[train] catboost   val PR-AUC 71.67%  ROC-AUC 99.82%  (2152s)
+[train] fitting histgb (3.4gb RAM free)
+[train] histgb: using tuned params (search val PR-AUC 66.74%)
+[train] histgb: recency half-life 60 days (a fraud that old counts half as much as one today)
+[train] histgb     val PR-AUC 75.00%  ROC-AUC 99.57%  (57s)
+[ensemble] searched 66 weight combinations; best val PR-AUC 0.7950 with weights {'xgboost': 1.0, 'catboost': 0.0, 'histgb': 0.0}
+[train] calibration (isotonic, fitted on val_fit, measured on val_sel)
+    expected calibration error 0.6452% -> 0.0117%
+    PR-AUC 78.90% -> 78.74% (monotone map: ranking is unchanged by construction)
+
+[train] validation summary (random baseline PR-AUC = 0.00174)
+    xgboost    PR-AUC 0.7909  ROC-AUC 0.9985
+    ensemble   PR-AUC 0.7909  ROC-AUC 0.9985
+    histgb     PR-AUC 0.7500  ROC-AUC 0.9957
+    catboost   PR-AUC 0.7167  ROC-AUC 0.9982
+[train] ensemble does NOT improve on the best single model on val (+0.0000)
+[train] wrote reports/training_summary.json

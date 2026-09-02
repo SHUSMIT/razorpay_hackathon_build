@@ -10,10 +10,12 @@ point:
     measured here and it is actively misleading, leaving 508 frauds and ranking
     configs by noise.
 
-    SCORE every trial on the FULL validation split. This is where cutting
-    corners would actually cost us: PR-AUC on a rare-event problem is driven by
-    the positive count, so scoring on a subsample would rank hyper-parameters
-    by sampling noise. Val keeps all ~2,000 of its frauds.
+    SCORE every trial on val_FIT -- the earlier 60% of validation. Not the
+    full split: val_sel is what src/assess.py uses to choose the operating
+    threshold, and selecting hyper-parameters against it would leave that
+    threshold tuned to data its own model was fitted around. The cost is a
+    noisier ranking signal (688 frauds rather than 1,243), and that is the
+    right trade: the threshold slice stays genuinely untouched.
 
     REFIT the winner on 100% of train (src/train.py), never on val.
 
@@ -102,6 +104,17 @@ def suggest(trial: optuna.Trial, name: str) -> dict:
     }
 
 
+def _val_fit_cut(n: int) -> int:
+    """Row index where val_fit ends, matching src/train.py's split."""
+    path = MODELS / "val_split.json"
+    if path.exists():
+        try:
+            return int(json.loads(path.read_text(encoding="utf-8"))["cut_index"])
+        except (json.JSONDecodeError, KeyError, OSError):
+            pass
+    return int(n * 0.60)
+
+
 def _progress(name: str, total: int):
     """Print each trial as it lands, so a long study is not a silent black box."""
 
@@ -153,7 +166,7 @@ def tune_one(name: str, X_sub, y_sub, X_val, y_val, trials: int,
                 if t.state == optuna.trial.TrialState.COMPLETE])
     remaining = max(trials - done, 0)
     print(f"\n[tune] {name}: {len(y_sub):,} search rows "
-          f"({int(np.sum(y_sub))} frauds), scored on {len(y_val):,} full val rows")
+          f"({int(np.sum(y_sub))} frauds), scored on {len(y_val):,} val_fit rows")
     if done:
         print(f"[tune] {name}: resuming -- {done} completed trial(s) found in "
               f"{OPTUNA_DB.name}, {remaining} to go")
@@ -201,6 +214,17 @@ def main() -> None:
     del train
     X_val, y_val = xy("val", cats)
     y_val = y_val.to_numpy()
+
+    # Trials are scored on val_FIT only, never on val_sel. val_sel is what
+    # src/assess.py uses to choose the operating threshold, and if the
+    # hyper-parameters had been selected using it, that threshold would be
+    # tuned against data its own model had already been fitted around. Fewer
+    # positives here (688 rather than 1,243) makes the ranking noisier, which
+    # is the price of keeping the threshold slice genuinely untouched.
+    cut = _val_fit_cut(len(y_val))
+    X_val, y_val = X_val.iloc[:cut], y_val[:cut]
+    print(f"[tune] scoring trials on val_fit: {len(y_val):,} rows, "
+          f"{int(y_val.sum())} frauds (val_sel is held back for the threshold)")
 
     X_sub, y_sub, dates_sub = subsample(X_tr, y_tr, args.subsample,
                                         dates=dates_tr)

@@ -1,0 +1,21 @@
+{
+  "weights": {
+    "xgboost": 1.0,
+    "catboost": 0.0,
+    "histgb": 0.0
+  },
+  "val_pr_auc": 0.7908651184200206,
+  "best_single_val_pr_auc": 0.7908651184200206,
+  "beats_best_single_on_val": false,
+  "calibration": {
+    "method": "isotonic",
+    "ece_before": 0.0064523865079030105,
+    "ece_after": 0.00011736031359053066
+  },
+  "members": [
+    "xgboost",
+    "catboost",
+    "histgb"
+  ],
+  "note": "Weights chosen on validation. Whether the blend is genuinely better than the best single model is tested on the held-out split by src/evaluate.py, with a paired bootstrap."
+}

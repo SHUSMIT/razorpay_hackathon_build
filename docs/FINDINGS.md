@@ -1,6 +1,6 @@
 # What the data actually said
 
-Four things were measured during this build that changed the model, and each
+Six things were measured during this build that changed the model, and each
 one would have quietly inflated the headline number if it had gone unchecked.
 They are recorded here with the evidence, because "we checked and it was fine"
 is not a claim anyone should take on trust.
@@ -102,7 +102,8 @@ transactions that still describe normal behaviour perfectly well; down-weighting
 them keeps that value while letting the recent regime dominate.
 
 *H* is not asserted. It is tuned by Optuna alongside every model
-hyper-parameter, from the candidates {0 (off), 180, 365, 730, 1095} days.
+hyper-parameter, from the candidates {0 (off), 30, 60, 90, 120, 180, 365, 730}
+days.
 
 Measured on validation, identical features:
 
@@ -111,13 +112,30 @@ Measured on validation, identical features:
 | Class weights only | 15.18% |
 | Class weights x recency decay | **46.00%** |
 
-Both tuned families independently selected **180 days**, the most aggressive
-decay offered, which is itself evidence about how fast this data goes stale.
+All three families independently selected **180 days** -- the most aggressive
+decay the grid then offered. That unanimity was the clue: the search had hit
+the edge of its own search space, so the real optimum was somewhere below and
+had never been measured.
 
-That also means the search hit the edge of its own grid, so **the true optimum
-may be shorter than 180 days and was not measured.** The candidate set
-{0, 180, 365, 730, 1095} was fixed before this behaviour was known. Extending it
-downward is the first thing to try with more compute.
+Extending the grid downward was worth roughly **nine points**:
+
+| Half-life | val_fit | val_sel (held back) | Effective sample |
+|---|---|---|---|
+| 30 d | 78.59% | 75.98% | 1,140 |
+| **60 d** | **79.99%** | **78.82%** | 1,983 |
+| 90 d | 79.75% | 78.12% | 3,091 |
+| 120 d | 77.26% | 76.36% | 4,665 |
+| 180 d (the old floor) | 71.14% | 69.03% | 8,907 |
+
+A genuine interior optimum this time, holding on both the slice used to choose
+it and the slice held back. Retraining every family at 60 days lifted all
+three: XGBoost 70.49% -> **79.09%**, HistGB 65.86% -> **75.00%**, CatBoost
+59.68% -> **71.67%** on validation.
+
+The cost is a small effective sample: at a 60-day half-life over an eight-year
+span, the ~7.3M training rows carry the weight of about 2,000. That number is
+recorded in `reports/training_summary.json` and should be read next to the
+score.
 
 The feature change also reordered the models. Before `merchant_state` was
 removed, CatBoost led decisively (5.57% vs XGBoost's 0.72%) because its ordered
@@ -139,23 +157,6 @@ The search set therefore keeps **every fraud** and subsamples only the
 negatives (10%). That is 740,467 rows with all 10,489 frauds: fast to search,
 and faithful to how a configuration will rank at full scale. Every trial is
 still scored on the **full** validation split for the same reason.
-
----
-
-## What is still uncertain
-
-- **The remaining scores carry selection optimism.** The recency half-life and
-  the model choice are both selected on validation, so validation numbers
-  flatter. The number worth quoting is the held-out test result in
-  `reports/assessment.json`, produced by a single pass in `src/assess.py`.
-- **An aggressive half-life shrinks the effective sample.** A 180-day
-  half-life over a 2010–2018 span means most rows contribute very little; the
-  effective sample size is recorded in `reports/training_summary.json` and
-  should be read alongside the score.
-- **This dataset is at least partly synthetic.** Its patterns are cleaner than
-  real payment traffic, and findings 2 and 3 are both artefacts of the
-  generator rather than facts about the world. The *method* transfers; these
-  particular numbers do not.
 
 ---
 
@@ -221,3 +222,48 @@ frauds while touching 236 legitimate customers out of 802,346 -- the model is
 close to what these 14 features support. The remaining headroom is in the
 DATA (richer signals a real processor has: device fingerprint, IP, session
 behaviour, merchant history), not in more machinery on top of these columns.
+
+---
+
+## 6. Calibration costs 0.15pp of ranking, and is worth it
+
+The served score is isotonic-calibrated so that a "0.56" means a 56% chance of
+fraud -- without that the cost model, which multiplies the score by money, is
+thresholding a number that does not mean what it says. It works: expected
+calibration error falls from **0.645% to 0.0117%** on held-back validation.
+
+It is not free. Isotonic regression is monotone, so it cannot reorder anything,
+but its flat regions merge distinct scores into ties:
+
+| | distinct score values |
+|---|---|
+| raw model output | 101,690 |
+| after calibration | 8,328 |
+
+Tied scores cannot be ranked against each other, so PR-AUC drops slightly --
+measured at **78.895% -> 78.743%** on val_sel, about 0.15pp.
+
+This matters for how results are reported. `src/assess.py` compares all
+candidate models on their **uncalibrated** scores, so the table compares like
+with like, and uses the **calibrated** score only for the shipped model's
+operating point, because that is what the service actually thresholds.
+Calibrating one model and not the others would have quietly reported the
+shipped model as worse than its rivals for a reason that has nothing to do
+with model quality.
+
+---
+
+## What is still uncertain
+
+- **The remaining scores carry selection optimism.** The recency half-life and
+  the model choice are both selected on validation, so validation numbers
+  flatter. The number worth quoting is the held-out test result in
+  `reports/assessment.json`, produced by a single pass in `src/assess.py`.
+- **An aggressive half-life shrinks the effective sample.** A 180-day
+  half-life over a 2010–2018 span means most rows contribute very little; the
+  effective sample size is recorded in `reports/training_summary.json` and
+  should be read alongside the score.
+- **This dataset is at least partly synthetic.** Its patterns are cleaner than
+  real payment traffic, and findings 2 and 3 are both artefacts of the
+  generator rather than facts about the world. The *method* transfers; these
+  particular numbers do not.

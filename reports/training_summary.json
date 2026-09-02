@@ -2,51 +2,51 @@
   "models": [
     {
       "model": "xgboost",
-      "val_pr_auc": 0.7048509876742275,
-      "val_roc_auc": 0.9952536413044538,
-      "train_seconds": 161.2,
+      "val_pr_auc": 0.7908651184200206,
+      "val_roc_auc": 0.9985390325878915,
+      "train_seconds": 402.1,
       "rows_used": 7310269,
       "frauds_used": 10489,
       "subsampled": false,
       "negative_fraction": 1.0,
-      "recency_half_life_days": 180,
-      "effective_sample_size": 9109.2
+      "recency_half_life_days": 60,
+      "effective_sample_size": 2000.0
     },
     {
       "model": "catboost",
-      "val_pr_auc": 0.5967569210018927,
-      "val_roc_auc": 0.9943083080536825,
-      "train_seconds": 2720.2,
+      "val_pr_auc": 0.7166935448741215,
+      "val_roc_auc": 0.9981613161431369,
+      "train_seconds": 2152.5,
       "rows_used": 7310269,
       "frauds_used": 10489,
       "subsampled": false,
       "negative_fraction": 1.0,
-      "recency_half_life_days": 180,
-      "effective_sample_size": 9109.2
+      "recency_half_life_days": 60,
+      "effective_sample_size": 2000.0
     },
     {
       "model": "histgb",
-      "val_pr_auc": 0.6585692871345904,
-      "val_roc_auc": 0.9952860394220693,
-      "train_seconds": 97.7,
+      "val_pr_auc": 0.7500085115655958,
+      "val_roc_auc": 0.9957021582186113,
+      "train_seconds": 56.8,
       "rows_used": 7310269,
       "frauds_used": 10489,
       "subsampled": false,
       "negative_fraction": 1.0,
-      "recency_half_life_days": 180,
-      "effective_sample_size": 9109.2
+      "recency_half_life_days": 60,
+      "effective_sample_size": 2000.0
     },
     {
       "model": "ensemble",
-      "val_pr_auc": 0.6585692871345904,
-      "val_roc_auc": 0.9952860394220693,
+      "val_pr_auc": 0.7908651184200206,
+      "val_roc_auc": 0.9985390325878915,
       "train_seconds": 0.0
     }
   ],
   "ensemble_weights": {
-    "xgboost": 0.0,
+    "xgboost": 1.0,
     "catboost": 0.0,
-    "histgb": 1.0
+    "histgb": 0.0
   },
   "val_random_baseline": 0.0017428564618191048
 }
