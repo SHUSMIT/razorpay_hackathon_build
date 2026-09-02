@@ -10,3 +10,12 @@
     [xgboost] trial 8/30  this=7.47%  best=79.67%  ram_free=0.7gb
     [xgboost] trial 9/30  this=80.52%  best=80.52%  ram_free=1.3gb
     [xgboost] trial 10/30  this=16.75%  best=80.52%  ram_free=1.2gb
+    [xgboost] trial 11/30  this=78.07%  best=80.52%  ram_free=1.2gb
+    [xgboost] trial 12/30  this=56.23%  best=80.52%  ram_free=1.2gb
+    [xgboost] trial 13/30  this=78.29%  best=80.52%  ram_free=1.2gb
+    [xgboost] trial 14/30  this=16.22%  best=80.52%  ram_free=1.2gb
+    [xgboost] trial 15/30  this=71.51%  best=80.52%  ram_free=1.2gb
+    [xgboost] trial 16/30  this=80.61%  best=80.61%  ram_free=1.8gb
+    [xgboost] trial 17/30  this=69.46%  best=80.61%  ram_free=1.8gb
+    [xgboost] trial 18/30  this=81.13%  best=81.13%  ram_free=2.1gb
+    [xgboost] trial 19/30  this=79.33%  best=81.13%  ram_free=2.0gb

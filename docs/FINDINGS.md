@@ -1,6 +1,6 @@
 # What the data actually said
 
-Six things were measured during this build that changed the model, and each
+Seven things were measured during this build that changed the model, and each
 one would have quietly inflated the headline number if it had gone unchecked.
 They are recorded here with the evidence, because "we checked and it was fine"
 is not a claim anyone should take on trust.
@@ -250,6 +250,59 @@ operating point, because that is what the service actually thresholds.
 Calibrating one model and not the others would have quietly reported the
 shipped model as worse than its rivals for a reason that has nothing to do
 with model quality.
+
+---
+
+## 7. Most of the remaining score rests on one artefact, and it must be said
+
+`merchant_state` was dropped in finding 2 because 95-98% of later-period fraud
+sat in a single value. The shortcut did not fully go away. It came back through
+a side door.
+
+`is_online` is derived from a **missing merchant ZIP**. Combined with
+`use_chip`, the pair reconstructs most of what `merchant_state` was doing:
+
+| Split | rows that are "chip/swipe presented, but no ZIP" | fraud rate inside | share of ALL fraud |
+|---|---|---|---|
+| train | 0.68% of traffic | 1.17% | 5.5% |
+| val | 0.83% | 20.48% | **97.7%** |
+| test | 0.90% | 18.54% | **94.9%** |
+| demo | 0.95% | 22.60% | **100%** |
+
+Those are the same rows that used to be `merchant_state = Italy`. In the real
+world a chip transaction is physically present at a merchant and therefore has
+a location; this combination is an artefact of how the data was generated.
+
+**How much of the result depends on it**, measured by removing `is_online`
+entirely and retraining with identical settings:
+
+| Feature set | val_fit | val_sel |
+|---|---|---|
+| All 14 features | **80.05%** | **78.90%** |
+| Without `is_online` | 10.07% | 11.46% |
+
+About **87% of the model's measured performance** comes from that one feature.
+
+### Why it is kept anyway
+
+Unlike `merchant_state`, `is_online` is a legitimate feature with a real
+meaning. Card-not-present fraud is one of the largest genuine categories in
+payments, and any production risk model uses that flag. Dropping a real feature
+to escape an artefact would be its own distortion, and the flag alone is not a
+lookup table -- it scores 17.6% on test where the model scores 74.25%, so the
+model is doing substantial work ranking *within* the candidates it selects.
+
+What is not defensible is quoting 74.25% without this caveat. So:
+
+- **74.25% is the honest measurement on this dataset.**
+- **~11% is the better estimate of what transfers** to payment data where a
+  chip transaction always carries a merchant location.
+
+The gap between those two numbers is a property of the dataset, not of the
+method. Every piece of machinery around the model -- the leakage-checked
+temporal split, the cost-based threshold, the block-rate gate, the review
+queue, the audit trail, the reviewer explanations -- is unaffected by which of
+the two numbers is true.
 
 ---
 

@@ -79,6 +79,16 @@ editor. Close everything else — a notification mid-take costs a re-shoot.
 > card-not-present in the training years, and 86% chip-present in the recent
 > ones. Eight years of history was teaching the wrong pattern."
 
+*If you have 15 seconds spare, or if a judge asks how much to trust the number:*
+
+> "And I'll get ahead of one thing. Most of my remaining score leans on a
+> single flag — whether the merchant ZIP is missing. In this data that marks
+> almost all the fraud, which is a quirk of how it was generated, not how
+> payments work. Take that feature away and I score 11%, not 74%. Eleven is
+> the number I'd expect on real traffic. Everything around the model — the
+> threshold, the gate, the review queue, the audit trail — doesn't care which
+> of those two numbers is true."
+
 ---
 
 ## Beat 4 — what we did about the drift (2:30–3:10)

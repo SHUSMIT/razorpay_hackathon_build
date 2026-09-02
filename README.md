@@ -232,6 +232,16 @@ says so in the report. Override with `FRM_THREADS` and `FRM_RAM_GB`.
 
 ## Known limitations
 
+- **Most of the score rests on one artefact.** `is_online` is derived from a
+  missing merchant ZIP, and combined with `use_chip` it marks 95-100% of
+  later-period fraud — the same rows that made `merchant_state` a lookup table.
+  Removing that one feature drops validation PR-AUC from 80.05% to 10.07%. The
+  flag is a legitimate real-world signal (card-not-present fraud is a genuine
+  category) so it is kept, but **~11% is the better estimate of what transfers**
+  to payment data where a chip transaction always carries a merchant location.
+  Full evidence in [docs/FINDINGS.md](docs/FINDINGS.md#7). Everything around
+  the model — the temporal split, cost threshold, gate, review queue, audit
+  trail, explanations — is unaffected either way.
 - **This dataset is at least partly synthetic.** Its patterns are cleaner than
   real payment traffic. Findings 2 and 3 above are artefacts of the generator,
   not facts about the world. The *method* transfers; these numbers do not.
