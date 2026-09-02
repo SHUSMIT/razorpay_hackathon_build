@@ -19,3 +19,20 @@
     [xgboost] trial 17/30  this=69.46%  best=80.61%  ram_free=1.8gb
     [xgboost] trial 18/30  this=81.13%  best=81.13%  ram_free=2.1gb
     [xgboost] trial 19/30  this=79.33%  best=81.13%  ram_free=2.0gb
+    [xgboost] trial 20/30  this=79.96%  best=81.13%  ram_free=1.9gb
+    [xgboost] trial 21/30  this=79.05%  best=81.13%  ram_free=1.9gb
+    [xgboost] trial 22/30  this=80.84%  best=81.13%  ram_free=2.0gb
+    [xgboost] trial 23/30  this=81.05%  best=81.13%  ram_free=2.0gb
+    [xgboost] trial 24/30  this=79.96%  best=81.13%  ram_free=2.0gb
+    [xgboost] trial 25/30  this=38.97%  best=81.13%  ram_free=2.0gb
+    [xgboost] trial 26/30  this=17.42%  best=81.13%  ram_free=2.0gb
+    [xgboost] trial 27/30  this=79.28%  best=81.13%  ram_free=2.0gb
+    [xgboost] trial 28/30  this=63.92%  best=81.13%  ram_free=1.9gb
+    [xgboost] trial 29/30  this=80.59%  best=81.13%  ram_free=1.6gb
+    [xgboost] trial 30/30  this=77.26%  best=81.13%  ram_free=1.3gb
+[tune] xgboost: best val PR-AUC 81.13%
+[tune] xgboost: best params {'max_depth': 7, 'learning_rate': 0.12383946403269343, 'subsample': 0.9362148766913247, 'colsample_bytree': 0.5893086004227839, 'min_child_weight': 222, 'reg_lambda': 0.577566240886126, 'gamma': 6.114586176880898e-05, 'recency_half_life_days': 60}
+
+[tune] summary (validation PR-AUC, search on 10% of train)
+    xgboost    81.13%
+[tune] wrote reports/tuning_summary.json

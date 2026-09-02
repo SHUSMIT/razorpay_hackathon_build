@@ -1,47 +1,48 @@
 {
   "model_version": "frm-1.0.0",
-  "shipped": "xgboost",
+  "shipped": "ensemble",
   "selected_on": "val_fit",
   "threshold_selected_on": "val_sel",
   "val_fit_pr_auc": {
-    "xgboost": 0.7950415755307207,
+    "xgboost": 0.8042292386828575,
     "catboost": 0.7035031316105209,
     "histgb": 0.7501809087326082,
-    "ensemble": 0.7950415755307207
+    "ensemble": 0.8064039072292368
   },
   "test": {
     "xgboost": {
       "threshold": 0.5,
-      "precision": 0.6708074534161491,
-      "recall": 0.6898509581263307,
-      "f1": 0.6801959412176347,
-      "pr_auc": 0.7425345762323148,
-      "roc_auc": 0.9929629037497283,
+      "precision": 0.35820484581497797,
+      "recall": 0.9233498935415189,
+      "f1": 0.5161674270977981,
+      "pr_auc": 0.7599163957443535,
+      "roc_auc": 0.997848088205256,
       "confusion_matrix": {
-        "tn": 800460,
-        "fp": 477,
-        "fn": 437,
-        "tp": 972
+        "tn": 798606,
+        "fp": 2331,
+        "fn": 108,
+        "tp": 1301
       },
       "pr_auc_ci": {
-        "point": 0.7425345762323148,
-        "ci_low": 0.7195284703581646,
-        "ci_high": 0.7654310746624227,
-        "std": 0.011819207484656072,
+        "point": 0.7599163957443535,
+        "ci_low": 0.7410840598102714,
+        "ci_high": 0.7793643346553373,
+        "std": 0.010046425804738489,
         "n_boot": 500
       },
       "cost_at_selected_threshold": {
-        "threshold": 0.56,
-        "tp": 954,
-        "fp": 440,
-        "fn": 455,
-        "fn_cost": 47170.890048531815,
-        "fp_cost": 22000.0,
-        "total_cost": 69170.89004853182,
-        "precision": 0.6843615494978479,
-        "recall": 0.6770759403832506,
-        "block_rate": 0.0017374050596625397
-      }
+        "threshold": 0.62,
+        "tp": 1276,
+        "fp": 1924,
+        "fn": 133,
+        "fn_cost": 8985.579993061721,
+        "fp_cost": 96200.0,
+        "total_cost": 105185.57999306172,
+        "precision": 0.39875,
+        "recall": 0.9056068133427964,
+        "block_rate": 0.00398830429764715
+      },
+      "calibrated_for_serving": false
     },
     "catboost": {
       "threshold": 0.5,
@@ -64,17 +65,18 @@
         "n_boot": 500
       },
       "cost_at_selected_threshold": {
-        "threshold": 0.56,
-        "tp": 1318,
-        "fp": 3331,
-        "fn": 91,
-        "fn_cost": 6926.069989778101,
-        "fp_cost": 166550.0,
-        "total_cost": 173476.0699897781,
-        "precision": 0.28350182835018284,
-        "recall": 0.9354151880766501,
-        "block_rate": 0.0057942583374255
-      }
+        "threshold": 0.62,
+        "tp": 1306,
+        "fp": 3101,
+        "fn": 103,
+        "fn_cost": 7974.999985553324,
+        "fp_cost": 155050.0,
+        "total_cost": 163024.99998555332,
+        "precision": 0.29634672112548216,
+        "recall": 0.9268985095812633,
+        "block_rate": 0.005492642824915934
+      },
+      "calibrated_for_serving": false
     },
     "histgb": {
       "threshold": 0.5,
@@ -97,57 +99,59 @@
         "n_boot": 500
       },
       "cost_at_selected_threshold": {
-        "threshold": 0.56,
-        "tp": 1201,
-        "fp": 1771,
-        "fn": 208,
-        "fn_cost": 17575.740011114627,
-        "fp_cost": 88550.0,
-        "total_cost": 106125.74001111463,
-        "precision": 0.40410497981157467,
-        "recall": 0.8523775727466288,
-        "block_rate": 0.0037041376164397904
-      }
+        "threshold": 0.62,
+        "tp": 1190,
+        "fp": 1578,
+        "fn": 219,
+        "fn_cost": 19178.900025028735,
+        "fp_cost": 78900.0,
+        "total_cost": 98078.90002502874,
+        "precision": 0.42991329479768786,
+        "recall": 0.8445706174591909,
+        "block_rate": 0.0034498832174647844
+      },
+      "calibrated_for_serving": false
     },
     "ensemble": {
       "threshold": 0.5,
-      "precision": 0.346960445978232,
-      "recall": 0.9276082327892122,
-      "f1": 0.5050231839258115,
-      "pr_auc": 0.7440218219757994,
-      "roc_auc": 0.9963341388315189,
+      "precision": 0.3542227003765465,
+      "recall": 0.9347054648687012,
+      "f1": 0.5137507314218841,
+      "pr_auc": 0.7593162822488603,
+      "roc_auc": 0.9980911086598125,
       "confusion_matrix": {
-        "tn": 798477,
-        "fp": 2460,
-        "fn": 102,
-        "tp": 1307
+        "tn": 798536,
+        "fp": 2401,
+        "fn": 92,
+        "tp": 1317
       },
       "pr_auc_ci": {
-        "point": 0.7440218219757994,
-        "ci_low": 0.7210492784677585,
-        "ci_high": 0.7666749232472125,
-        "std": 0.011767942875816397,
+        "point": 0.7593162822488603,
+        "ci_low": 0.7407583268459634,
+        "ci_high": 0.778276192101094,
+        "std": 0.009820379327307678,
         "n_boot": 500
       },
       "cost_at_selected_threshold": {
-        "threshold": 0.56,
-        "tp": 1297,
-        "fp": 2240,
-        "fn": 112,
-        "fn_cost": 7790.779996475205,
-        "fp_cost": 112000.0,
-        "total_cost": 119790.7799964752,
-        "precision": 0.3666949392140232,
-        "recall": 0.9205110007097232,
-        "block_rate": 0.004408322593993115
-      }
+        "threshold": 0.62,
+        "tp": 928,
+        "fp": 365,
+        "fn": 481,
+        "fn_cost": 45690.22000655718,
+        "fp_cost": 18250.0,
+        "total_cost": 63940.22000655718,
+        "precision": 0.7177107501933488,
+        "recall": 0.6586231369765791,
+        "block_rate": 0.0016115242052680515
+      },
+      "calibrated_for_serving": true
     }
   },
   "test_random_baseline": 0.0017561002360577606,
   "calibration": {
     "method": "isotonic",
-    "ece_before": 0.0064523865079030105,
-    "ece_after": 0.00011736031359053066
+    "ece_before": 0.006540373728576758,
+    "ece_after": 3.1911717459463286e-05
   },
   "cost_model": {
     "fp_cost_per_block": 50.0,
@@ -155,47 +159,47 @@
     "chargeback_fee": 0.0
   },
   "cost_optimal": {
-    "threshold": 0.56,
-    "tp": 954,
-    "fp": 440,
-    "fn": 455,
-    "fn_cost": 47170.890048531815,
-    "fp_cost": 22000.0,
-    "total_cost": 69170.89004853182,
-    "precision": 0.6843615494978479,
-    "recall": 0.6770759403832506,
-    "block_rate": 0.0017374050596625397
+    "threshold": 0.62,
+    "tp": 928,
+    "fp": 365,
+    "fn": 481,
+    "fn_cost": 45690.22000655718,
+    "fp_cost": 18250.0,
+    "total_cost": 63940.22000655718,
+    "precision": 0.7177107501933488,
+    "recall": 0.6586231369765791,
+    "block_rate": 0.0016115242052680515
   },
   "cost_oracle_test_argmin": {
-    "threshold": 0.66,
-    "tp": 922.0,
-    "fp": 359.0,
-    "fn": 487.0,
-    "fn_cost": 50489.32003491931,
-    "fp_cost": 17950.0,
-    "total_cost": 68439.3200349193,
-    "precision": 0.7197501951600312,
-    "recall": 0.6543647977288858,
-    "block_rate": 0.0015965680641518746
+    "threshold": 0.53,
+    "tp": 963.0,
+    "fp": 422.0,
+    "fn": 446.0,
+    "fn_cost": 42309.83001277037,
+    "fp_cost": 21100.0,
+    "total_cost": 63409.83001277037,
+    "precision": 0.6953068592057762,
+    "recall": 0.6834634492547906,
+    "block_rate": 0.001726187953825407
   },
-  "selection_bias": 731.5700136125088,
+  "selection_bias": 530.3899937868118,
   "do_nothing_cost": 132543.13022353314,
   "review_band": [
-    0.241326,
-    0.56
+    0.242587,
+    0.62
   ],
   "ensemble_weights": {
-    "xgboost": 1.0,
-    "catboost": 0.0,
+    "xgboost": 0.8,
+    "catboost": 0.2,
     "histgb": 0.0
   },
   "ensemble_vs_best_single": {
     "best_single": "xgboost",
-    "delta_point": 0.0014872457434845776,
-    "ci_low": 0.001003077182965878,
-    "ci_high": 0.001988886696645669,
-    "p_b_better_fraction": 1.0,
-    "significant_at_95": true,
+    "delta_point": -0.0006001134954932708,
+    "ci_low": -0.00503625211840106,
+    "ci_high": 0.003558719916006544,
+    "p_b_better_fraction": 0.394,
+    "significant_at_95": false,
     "n_boot": 500
   },
   "test_rows": 802346,
@@ -204,19 +208,19 @@
     "rows": 89151,
     "frauds": 191,
     "base_rate": 0.002142432502159258,
-    "pr_auc": 0.7442537513276943,
-    "roc_auc": 0.9992302558476778,
+    "pr_auc": 0.7613600922269728,
+    "roc_auc": 0.9992982315718105,
     "cost_at_selected_threshold": {
-      "threshold": 0.56,
-      "tp": 137,
-      "fp": 75,
-      "fn": 54,
-      "fn_cost": 6150.61996281147,
-      "fp_cost": 3750.0,
-      "total_cost": 9900.61996281147,
-      "precision": 0.6462264150943396,
-      "recall": 0.7172774869109948,
-      "block_rate": 0.0023779879081558255
+      "threshold": 0.62,
+      "tp": 131,
+      "fp": 64,
+      "fn": 60,
+      "fn_cost": 6311.45997607708,
+      "fp_cost": 3200.0,
+      "total_cost": 9511.45997607708,
+      "precision": 0.6717948717948717,
+      "recall": 0.6858638743455497,
+      "block_rate": 0.0021873001985395564
     }
   }
 }

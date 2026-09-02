@@ -30,35 +30,35 @@ three, in money.
 ## Results
 
 <!-- RESULTS:START -->
-**Shipped model: `xgboost`**, selected on validation and evaluated once on a held-out test split of 802,346 transactions containing 1,409 frauds (0.176% of traffic).
+**Shipped model: `ensemble`**, selected on validation and evaluated once on a held-out test split of 802,346 transactions containing 1,409 frauds (0.176% of traffic).
 
 | Metric | Held-out test |
 |---|---|
-| PR-AUC | **74.25%** (95% CI 71.95% – 76.54%) |
-| Lift over random | 423x |
-| ROC-AUC | 99.30% |
-| Fraud caught (recall) | 67.71% |
-| Blocks that were fraud (precision) | 68.44% |
-| Legitimate traffic blocked | 0.174% |
+| PR-AUC | **75.93%** (95% CI 74.08% – 77.83%) |
+| Lift over random | 432x |
+| ROC-AUC | 99.81% |
+| Fraud caught (recall) | 65.86% |
+| Blocks that were fraud (precision) | 71.77% |
+| Legitimate traffic blocked | 0.161% |
 
 **Cost outcome.** A missed fraud costs the merchant the full transaction amount; a wrongly blocked customer costs a flat 50 in support and lost goodwill.
 
 | | Cost on the test split |
 |---|---|
 | Do nothing | 132,543 |
-| This service | 69,171 |
-| **Avoided** | **63,372** (47.8%) |
+| This service | 63,940 |
+| **Avoided** | **68,603** (51.8%) |
 
-Operating point: block at **56.00%**, human review from **24.13%**. Both chosen on a slice of validation that the models, the blend weights and the calibrator never saw.
+Operating point: block at **62.00%**, human review from **24.26%**. Both chosen on a slice of validation that the models, the blend weights and the calibrator never saw.
 
-For honesty: picking the threshold on the test split itself would have looked 732 better. That is selection bias, and it is not used.
+For honesty: picking the threshold on the test split itself would have looked 530 better. That is selection bias, and it is not used.
 
 **All candidates on the held-out split**
 
 | Model | PR-AUC | ROC-AUC |
 |---|---|---|
-| ensemble | 74.40% | 99.63% |
-| xgboost (shipped) | 74.25% | 99.30% |
+| xgboost | 75.99% | 99.78% |
+| ensemble (shipped) | 75.93% | 99.81% |
 | histgb | 72.40% | 99.61% |
 | catboost | 66.97% | 99.68% |
 
@@ -67,19 +67,15 @@ For honesty: picking the threshold on the test split itself would have looked 73
 | | Check set |
 |---|---|
 | Transactions | 89,151 (191 fraud) |
-| PR-AUC | 74.43% |
-| Recall at the shipped threshold | 71.73% |
-| Precision at the shipped threshold | 64.62% |
+| PR-AUC | 76.14% |
+| Recall at the shipped threshold | 68.59% |
+| Precision at the shipped threshold | 67.18% |
 
-The blend is a statistically significant improvement over the best single model (`xgboost`): paired bootstrap delta 0.15%, 95% CI 0.10% – 0.20%.
+The blend is **not** a statistically significant improvement over the best single model (`xgboost`): paired bootstrap delta -0.06%, 95% CI -0.50% – 0.36%.
 
-Scores are isotonic-calibrated: expected calibration error 0.6452% → 0.0117% on held-back validation.
+Scores are isotonic-calibrated: expected calibration error 0.6540% → 0.0032% on held-back validation.
 
 > `xgboost` training weights halve every 60 days (effective sample size 2,000 rows).
-
-> `catboost` training weights halve every 60 days (effective sample size 2,000 rows).
-
-> `histgb` training weights halve every 60 days (effective sample size 2,000 rows).
 
 <!-- RESULTS:END -->
 
@@ -91,8 +87,8 @@ Scores are isotonic-calibrated: expected calibration error 0.6452% → 0.0117% o
 
 ## What the data actually said
 
-Four measured findings changed this model, and each one would have inflated the
-headline number if left unchecked. Full evidence in **[docs/FINDINGS.md](docs/FINDINGS.md)**.
+Seven measured findings changed this model, and each one would have inflated
+the headline number if left unchecked. Full evidence in **[docs/FINDINGS.md](docs/FINDINGS.md)**.
 
 1. **A random split scores 685x higher, and it is a lie.** With only 2,000
    cardholders, income/debt/credit-score columns form a near-unique fingerprint
@@ -108,10 +104,18 @@ headline number if left unchecked. Full evidence in **[docs/FINDINGS.md](docs/FI
    card-not-present in the training era and 86–89% chip-present in the recent
    era. Eight years of history was teaching the wrong pattern. Training weights
    now decay exponentially with age, with the half-life **tuned by Optuna**
-   rather than asserted: 15.2% → 46.0% on validation.
+   rather than asserted. All three families first picked 180 days — the floor
+   of the search grid, which was the clue that the grid was too narrow.
+   Widening it found a real optimum at **60 days**, worth ~9 points: XGBoost
+   70.49% → **79.09%** on validation.
 
 4. **A 5% subsample ranks hyper-parameters by noise.** It leaves ~508 frauds.
    The search set keeps *every* fraud and subsamples only negatives.
+
+5. **Velocity features do not help on this data**, and the reason is
+   measurable: fraud cards here make 0.18 transactions in the prior hour
+   against 0.18 for legitimate ones. The generator does not simulate card
+   takeover. They are computed and stored, but excluded.
 
 ---
 
@@ -123,7 +127,7 @@ headline number if left unchecked. Full evidence in **[docs/FINDINGS.md](docs/FI
   cards, users, mcc_codes        │  prepare.py   join → clean → TIME-ORDERED   │
           │                      │      │        split → LEAKAGE ASSERTION     │
           ▼                      │      ▼        (ids AND time boundaries)     │
-  8.9M labelled transactions ────┼──► schema.py  14 features kept, 39 dropped  │
+  8.9M labelled transactions ────┼──► schema.py  14 features kept, 40 dropped  │
   13,332 fraud (0.15%)           │      │        each with a written reason    │
                                  │      ▼                                      │
                                  │  weights.py   class imbalance x recency     │

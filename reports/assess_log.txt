@@ -3,39 +3,40 @@
 [assess]   val_sel 285,279 rows (555 frauds) -- threshold selection
 
 [assess] PR-AUC on val_fit (this is what selects the model)
-    xgboost      79.50%  <-- shipped
-    ensemble     79.50%
+    ensemble     80.64%  <-- shipped
+    xgboost      80.42%
     histgb       75.02%
     catboost     70.35%
 
-[assess] isotonic calibration for 'xgboost' (fitted on val_fit, measured on val_sel)
-    expected calibration error 0.6452% -> 0.0117%
-[assess] review band sized by capacity: score >= 24.13% sends 0.20% of traffic to a human (target 0.20%)
+[assess] isotonic calibration for 'ensemble' (fitted on val_fit, measured on val_sel)
+    expected calibration error 0.6540% -> 0.0032%
+[assess] review band sized by capacity: score >= 24.26% sends 0.20% of traffic to a human (target 0.20%)
 
 [assess] scoring the held-out TEST split (first and only look)
 
 [assess] held-out test: 802,346 transactions, 1,409 frauds (0.176%)
-    PR-AUC 74.25%  (random baseline 0.176%, lift 423x)
-    ROC-AUC 99.30%
+    PR-AUC 75.93%  (random baseline 0.176%, lift 432x)
+    ROC-AUC 99.81%
 
 [assess] cost model: FP=50 per wrong block, FN=actual amount
     do nothing                               132,543
-    at threshold 56.00% (chosen on val_sel)         69,171
-    saves 63,372 (47.8% of avoidable loss)
-    precision 68.44%  recall 67.71%  fp=440  fn=455  block rate 0.174%
-    [reference] the test-argmin threshold 66.00% would give 68,439; choosing it on the very split we report would be worth 732 of selection bias. Not used.
+    at threshold 62.00% (chosen on val_sel)         63,940
+    saves 68,603 (51.8% of avoidable loss)
+    precision 71.77%  recall 65.86%  fp=365  fn=481  block rate 0.161%
+    [reference] the test-argmin threshold 53.00% would give 63,410; choosing it on the very split we report would be worth 530 of selection bias. Not used.
 
 [assess] ensemble vs best single (xgboost) on test
-    xgboost    PR-AUC 74.25%
-    ensemble   PR-AUC 74.40%
-    paired delta +0.15%  95% CI [+0.10%, +0.20%]
+    xgboost    PR-AUC 75.99%
+    ensemble   PR-AUC 75.93%
+    paired delta -0.06%  95% CI [-0.50%, +0.36%]
+    -> NOT a statistically significant improvement. Reported as such.
 
 [assess] 1% check set (the month AFTER test, never touched)
     89,151 transactions, 191 frauds (0.214%)
-    PR-AUC 74.43%  (test was 74.25%)
-    at the shipped threshold: precision 64.62%  recall 71.73%
+    PR-AUC 76.14%  (test was 75.93%)
+    at the shipped threshold: precision 67.18%  recall 68.59%
 [eval] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\reports\pr_curve.png
 [eval] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\reports\cost_curve.png
 
 [assess] wrote reports/assessment.json and serving_config.json
-[assess] serving: xgboost  block at 56.00%  review from 24.13%
+[assess] serving: ensemble  block at 62.00%  review from 24.26%

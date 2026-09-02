@@ -1,14 +1,14 @@
 {
-  "shipped_model": "xgboost",
+  "shipped_model": "ensemble",
   "ensemble_weights": {
-    "xgboost": 1.0,
-    "catboost": 0.0,
+    "xgboost": 0.8,
+    "catboost": 0.2,
     "histgb": 0.0
   },
-  "block_threshold": 0.56,
-  "review_threshold": 0.241326,
+  "block_threshold": 0.62,
+  "review_threshold": 0.242587,
   "fp_cost": 50.0,
   "model_version": "frm-1.0.0",
-  "expected_precision_at_block": 0.6843615494978479,
-  "expected_recall_at_block": 0.6770759403832506
+  "expected_precision_at_block": 0.7177107501933488,
+  "expected_recall_at_block": 0.6586231369765791
 }

@@ -1,0 +1,87 @@
+[train] train (7310269, 14), 10,489 frauds (0.1435%)
+[train] val   (713197, 14), 1,243 frauds
+[train]   val_fit 427,918 rows (688 frauds) -- early stopping, blend weights, calibration
+[train]   val_sel 285,279 rows (555 frauds) -- held back for threshold selection
+[train] fitting xgboost (0.9gb RAM free)
+[train] xgboost: using tuned params (search val PR-AUC 81.13%)
+[train] xgboost: recency half-life 60 days (a fraud that old counts half as much as one today)
+[train] xgboost    val PR-AUC 79.29%  ROC-AUC 99.84%  (142s)
+[train] catboost   restored from checkpoint, val PR-AUC 71.67%
+[train] histgb     restored from checkpoint, val PR-AUC 75.00%
+[ensemble] searched 66 weight combinations; best val PR-AUC 0.8064 with weights {'xgboost': 0.8, 'catboost': 0.2, 'histgb': 0.0}
+[train] calibration (isotonic, fitted on val_fit, measured on val_sel)
+    expected calibration error 0.6540% -> 0.0032%
+    PR-AUC 79.11% -> 79.01% (monotone map: ranking is unchanged by construction)
+
+[train] validation summary (random baseline PR-AUC = 0.00174)
+    ensemble   PR-AUC 0.7978  ROC-AUC 0.9986
+    xgboost    PR-AUC 0.7929  ROC-AUC 0.9984
+    histgb     PR-AUC 0.7500  ROC-AUC 0.9957
+    catboost   PR-AUC 0.7167  ROC-AUC 0.9982
+[train] ensemble improves on the best single model on val (+0.0050) -- to be confirmed on test
+[train] wrote reports/training_summary.json
+[assess] scoring validation
+[assess]   val_fit 427,918 rows (688 frauds) -- model choice + calibration
+[assess]   val_sel 285,279 rows (555 frauds) -- threshold selection
+
+[assess] PR-AUC on val_fit (this is what selects the model)
+    ensemble     80.64%  <-- shipped
+    xgboost      80.42%
+    histgb       75.02%
+    catboost     70.35%
+
+[assess] isotonic calibration for 'ensemble' (fitted on val_fit, measured on val_sel)
+    expected calibration error 0.6540% -> 0.0032%
+[assess] review band sized by capacity: score >= 24.26% sends 0.20% of traffic to a human (target 0.20%)
+
+[assess] scoring the held-out TEST split (first and only look)
+
+[assess] held-out test: 802,346 transactions, 1,409 frauds (0.176%)
+    PR-AUC 75.93%  (random baseline 0.176%, lift 432x)
+    ROC-AUC 99.81%
+
+[assess] cost model: FP=50 per wrong block, FN=actual amount
+    do nothing                               132,543
+    at threshold 62.00% (chosen on val_sel)         63,940
+    saves 68,603 (51.8% of avoidable loss)
+    precision 71.77%  recall 65.86%  fp=365  fn=481  block rate 0.161%
+    [reference] the test-argmin threshold 53.00% would give 63,410; choosing it on the very split we report would be worth 530 of selection bias. Not used.
+
+[assess] ensemble vs best single (xgboost) on test
+    xgboost    PR-AUC 75.99%
+    ensemble   PR-AUC 75.93%
+    paired delta -0.06%  95% CI [-0.50%, +0.36%]
+    -> NOT a statistically significant improvement. Reported as such.
+
+[assess] 1% check set (the month AFTER test, never touched)
+    89,151 transactions, 191 frauds (0.214%)
+    PR-AUC 76.14%  (test was 75.93%)
+    at the shipped threshold: precision 67.18%  recall 68.59%
+[eval] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\reports\pr_curve.png
+[eval] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\reports\cost_curve.png
+
+[assess] wrote reports/assessment.json and serving_config.json
+[assess] serving: ensemble  block at 62.00%  review from 24.26%
+[context] base rates weighted to match the model's 60-day recency half-life
+[context] reference = 7,299,780 legitimate TRAIN rows; overall fraud rate 0.0929%
+[context] use_chip: highest-risk levels -> Chip Transaction 0.11%, Swipe Transaction 0.06%, Online Transaction 0.01%
+[context] mcc_category: highest-risk levels -> Computers, Computer Peripheral Equipment 12.43%, Furniture, Home Furnishings, and Equipment Stores 11.40%, Steel Drums and Barrels 10.84%
+[context] card_brand: highest-risk levels -> Amex 0.18%, Discover 0.10%, Mastercard 0.10%
+[context] card_type: highest-risk levels -> Debit (Prepaid) 0.12%, Credit 0.11%, Debit 0.08%
+[context] error_kind: highest-risk levels -> Bad PIN 0.83%, Technical Glitch 0.16%, Insufficient Balance 0.15%
+[context] is_online: highest-risk levels -> yes 0.72%, no 0.00%
+[context] is_night: highest-risk levels -> no 0.10%, yes 0.00%
+[context] has_error: highest-risk levels -> yes 0.24%, no 0.09%
+[context] has_chip: highest-risk levels -> no 0.10%, yes 0.09%
+[context] fraud rate by score band (validation, out-of-sample)
+    [0.000, 0.001)  n=  704,071  frauds=   18  rate=0.00%
+    [0.001, 0.005)  n=    3,831  frauds=   10  rate=0.26%
+    [0.005, 0.020)  n=    1,375  frauds=   15  rate=1.09%
+    [0.020, 0.050)  n=    1,211  frauds=   48  rate=3.96%
+    [0.050, 0.100)  n=      245  frauds=   25  rate=10.20%
+    [0.100, 0.250)  n=    1,061  frauds=  187  rate=17.62%
+    [0.250, 0.500)  n=      178  frauds=   44  rate=24.72%
+    [0.500, 1.010)  n=    1,225  frauds=  896  rate=73.14%
+[context] wrote C:\Users\shusm\Downloads\razorpya\fraud-risk-manager\models\feature_context.json
+[readme] metrics block regenerated from reports/
+CHAIN_COMPLETE

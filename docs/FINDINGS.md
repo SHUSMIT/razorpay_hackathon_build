@@ -274,7 +274,9 @@ world a chip transaction is physically present at a merchant and therefore has
 a location; this combination is an artefact of how the data was generated.
 
 **How much of the result depends on it**, measured by removing `is_online`
-entirely and retraining with identical settings:
+entirely and retraining with identical settings (measured against the
+parameters current at the time; the final model scores 80.42% on val_fit, so
+the ratio is unchanged):
 
 | Feature set | val_fit | val_sel |
 |---|---|---|

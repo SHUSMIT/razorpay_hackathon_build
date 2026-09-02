@@ -1,16 +1,16 @@
 {
   "weights": {
-    "xgboost": 1.0,
-    "catboost": 0.0,
+    "xgboost": 0.8,
+    "catboost": 0.2,
     "histgb": 0.0
   },
-  "val_pr_auc": 0.7908651184200206,
-  "best_single_val_pr_auc": 0.7908651184200206,
-  "beats_best_single_on_val": false,
+  "val_pr_auc": 0.7978420827525007,
+  "best_single_val_pr_auc": 0.7928659235310688,
+  "beats_best_single_on_val": true,
   "calibration": {
     "method": "isotonic",
-    "ece_before": 0.0064523865079030105,
-    "ece_after": 0.00011736031359053066
+    "ece_before": 0.006540373728576758,
+    "ece_after": 3.1911717459463286e-05
   },
   "members": [
     "xgboost",
