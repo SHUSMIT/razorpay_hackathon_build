@@ -55,15 +55,21 @@ def to_payload(row: pd.Series | dict) -> dict:
     }
 
 
-def display_fields(payload: dict) -> dict:
-    """What the operator sees about the transaction, in reading order."""
-    return {
-        "Amount": f"{payload['amount']:,.2f}",
-        "When": str(payload["date"])[:16],
-        "Presented": payload["use_chip"] or "unknown",
-        "Card present": "no - online" if payload["is_online"] else "yes",
-        "Merchant category": payload["mcc_category"] or "unknown",
-        "Card": " ".join(x for x in [payload["card_brand"],
-                                     payload["card_type"]] if x) or "unknown",
-        "Terminal error": payload["errors"] or "none",
-    }
+def display_fields(row: pd.Series | dict) -> dict:
+    """Every available demo column, excluding the hidden ground-truth label."""
+    row = row if isinstance(row, dict) else row.to_dict()
+    hidden = {"is_fraud"}
+    shown = {}
+    for field, value in row.items():
+        if field in hidden:
+            continue
+        if value is None or (isinstance(value, float) and value != value):
+            text = "unknown"
+        elif field == "date":
+            text = str(value)[:16]
+        elif isinstance(value, float):
+            text = f"{value:,.4f}"
+        else:
+            text = str(value)
+        shown[field.replace("_", " ").title()] = text
+    return shown

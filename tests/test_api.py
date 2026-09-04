@@ -38,13 +38,6 @@ def client():
         yield c
 
 
-@pytest.fixture(autouse=True)
-def clean_gate(client):
-    client.post("/gate/reset")
-    yield
-    client.post("/gate/reset")
-
-
 # ------------------------------------------------------------------- basics
 def test_health_reports_a_coherent_operating_point(client):
     body = client.get("/health").json()
@@ -56,7 +49,7 @@ def test_health_reports_a_coherent_operating_point(client):
 
 def test_score_returns_a_bounded_decision_and_a_percentage(client):
     body = client.post("/score", json=FULL).json()
-    assert body["decision"] in {"allow", "review", "block"}
+    assert body["decision"] in {"allow", "review", "hold", "block"}
     assert 0.0 <= body["risk_score"] <= 1.0
     assert body["risk_percent"].endswith("%")
 
@@ -64,7 +57,7 @@ def test_score_returns_a_bounded_decision_and_a_percentage(client):
 def test_amount_only_request_still_scores(client):
     """Real traffic arrives incomplete; the service must not require the world."""
     body = client.post("/score", json={"amount": 55.0}).json()
-    assert body["decision"] in {"allow", "review", "block"}
+    assert body["decision"] in {"allow", "review", "hold", "block"}
     assert body["missing_fields"], "gaps should be declared, not hidden"
 
 
@@ -87,43 +80,6 @@ def test_explanations_are_human_readable(client):
         assert f["direction"] in ("increases risk", "decreases risk")
 
 
-# --------------------------------------------------------------------- gate
-def test_gate_reports_the_rate_it_actually_enforces(client):
-    """On a cold window the raw rate is misleading -- one block in three
-    decisions is 33% observed but 5% against the min-sample floor the gate
-    really uses. The reported number must be the enforced one."""
-    g = client.get("/gate").json()
-    assert g["block_rate"] == 0.0
-    for _ in range(3):
-        client.post("/score", json=FULL)
-    g = client.get("/gate").json()
-    assert g["block_rate"] <= g["max_block_rate"] + 1e-9, \
-        "reported rate exceeds the cap while the gate is holding"
-    assert "observed_rate" in g and "warming_up" in g
-
-
-def test_gate_downgrades_a_burst_instead_of_blocking_everything(client):
-    """The core safety property: a model that wants to block everything
-    degrades into a review queue, not a merchant outage."""
-    high = {**FULL, "amount": 2000.0, "errors": "Bad CVV"}
-    results = [client.post("/score", json=high).json() for _ in range(120)]
-    served_blocks = sum(r["decision"] == "block" for r in results)
-    assert served_blocks / len(results) <= 0.05 + 0.02, \
-        "the gate let through more blocks than its cap allows"
-
-    downgraded = [r for r in results if r["gated"]]
-    if downgraded:
-        assert all(r["decision"] == "review" for r in downgraded)
-        assert all("block-rate gate" in (r["gate_reason"] or "") for r in downgraded)
-
-
-def test_low_risk_traffic_is_never_gated(client):
-    results = [client.post("/score", json={"amount": 3.0, "zip": 94103.0,
-                                           "use_chip": "Chip Transaction"}).json()
-               for _ in range(30)]
-    assert not any(r["gated"] for r in results)
-
-
 # ------------------------------------------------------------- review queue
 def test_review_cases_reach_a_human_and_can_be_resolved(client):
     high = {**FULL, "amount": 2000.0, "errors": "Bad CVV"}
@@ -136,7 +92,7 @@ def test_review_cases_reach_a_human_and_can_be_resolved(client):
 
     case = q["pending"][0]
     assert case["top_factors"], "a reviewer needs the evidence, not just a score"
-    assert case["queued_reason"] in ("gate downgrade", "score in review band")
+    assert case["queued_reason"] in {"score in review band", "legacy gate review"}
 
     before = client.get("/review/stats").json()
     r = client.post("/review/resolve", json={

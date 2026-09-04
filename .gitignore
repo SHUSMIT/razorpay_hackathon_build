@@ -16,6 +16,7 @@ data/processed/*
 # Only the two regenerable, noisy artefacts are excluded:
 reports/audit_log.jsonl
 reports/review_queue.jsonl
+reports/hold_queue.jsonl
 reports/optuna.db
 reports/*.log
 reports/*_log.txt
@@ -30,6 +31,8 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.env
+logs/
 .pytest_cache/
 .ipynb_checkpoints/
 .DS_Store

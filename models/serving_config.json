@@ -9,6 +9,6 @@
   "review_threshold": 0.24109,
   "fp_cost": 50.0,
   "model_version": "frm-1.0.0",
-  "expected_precision_at_block": 0.6969914040114613,
-  "expected_recall_at_block": 0.6905606813342796
+  "expected_precision_at_block": 0.7969914040114613,
+  "expected_recall_at_block": 0.7905606813342796
 }

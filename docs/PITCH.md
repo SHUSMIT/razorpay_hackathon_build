@@ -11,7 +11,6 @@ filming. **Never say a number you have not just seen on screen.**
 ```bash
 python run.py api                                  # terminal 1, leave it up
 python run.py app                                  # terminal 2 -> localhost:8501
-curl -X POST http://127.0.0.1:8000/gate/reset      # clean gate window
 ```
 
 Have open: the dashboard (4 tabs), one terminal, and `docs/FINDINGS.md` in an
@@ -105,17 +104,13 @@ editor. Close everything else — a notification mid-take costs a re-shoot.
 
 ---
 
-## Beat 5 — bounded decisioning, live (3:10–4:10)
+## Beat 5 — confidence-based decisioning, live (3:10–4:10)
 
-*Live Score tab → "Stress test the safety limit" → burst.*
+*Live Score tab → score a borderline transaction → Review Queue.*
 
-> "Here's a burst of high-risk traffic. The model wants to block **39** of
-> them. It blocked **2** and sent **37** to a human instead.
->
-> The service will never auto-block more than 5% of a rolling window,
-> regardless of what the model wants. So a bad deploy, a drift event, or an
-> attack degrades this into a review queue — **not a merchant outage.** That's
-> the difference between a model and a system."
+> "A human sees transactions only when the calibrated model score sits in the
+> review band. High-confidence fraud is blocked automatically; low-risk traffic
+> proceeds. The queue is for uncertainty, not for a volume throttle."
 
 *Then Review Queue tab — resolve one case.*
 
@@ -157,7 +152,5 @@ editor. Close everything else — a notification mid-take costs a re-shoot.
 ## If something breaks on camera
 
 - **API offline** — the sidebar says so; restart terminal 1.
-- **Empty review queue** — run the burst on Live Score; it fills it.
-- **Gate not firing** — `curl -X POST .../gate/reset`, then burst again; the
-  cap only bites after the window has a few decisions in it.
+- **Empty review queue** — score a borderline transaction from Live Score.
 - **A drawn fraud scores low** — use it. That is Beat 2's honest moment.

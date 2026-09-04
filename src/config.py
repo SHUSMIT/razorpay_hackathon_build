@@ -101,18 +101,6 @@ CHARGEBACK_FEE = 0.0      # optional flat fee on top of each missed fraud
 # decorative and essentially every review came from a gate downgrade.
 REVIEW_CAPACITY_RATE = 0.002
 
-# Bounded / gated decisioning: the service will never auto-block more than this
-# share of traffic in the rolling window. Beyond it, blocks are force-downgraded
-# to "review" and the downgrade is logged with a reason.
-MAX_BLOCK_RATE = 0.05     # 5% of the rolling window
-ROLLING_WINDOW = 200      # decisions considered when measuring the block rate
-# Floor for the rate denominator on a cold window. NOT an exemption: the gate is
-# active from the first request. With a floor of 20 and a 5% cap the first block
-# is admitted (1/20 == 5%) but a second consecutive one is held, so genuine
-# fraud is still blocked at startup while a burst cannot slip through before the
-# window fills.
-GATE_MIN_SAMPLE = 20
-
 # ----------------------------------------------------------------- artefacts
 SERVING_CONFIG = MODELS / "serving_config.json"
 FEATURE_CONTEXT = MODELS / "feature_context.json"

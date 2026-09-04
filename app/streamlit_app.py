@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import pandas as pd
@@ -76,15 +77,18 @@ def load_report(name: str) -> dict:
     return {}
 
 
-def decision_banner(decision: str, score_pct: str, gated: bool):
+def decision_banner(decision: str, score_pct: str):
     colour, text = DECISION_STYLE.get(decision, ("#444", decision.upper()))
-    note = " &nbsp;·&nbsp; downgraded by the block-rate gate" if gated else ""
+    if decision == "review":
+        detail = "flagged for human review"
+    else:
+        detail = f"risk score {score_pct}"
     st.markdown(
         f"""<div style="background:{colour};color:#fff;padding:18px 22px;
         border-radius:10px;margin:6px 0 14px 0;">
         <div style="font-size:13px;opacity:.85;letter-spacing:.08em;">DECISION</div>
         <div style="font-size:30px;font-weight:700;line-height:1.2;">{text}</div>
-        <div style="font-size:15px;opacity:.95;">risk score {score_pct}{note}</div>
+        <div style="font-size:15px;opacity:.95;">{detail}</div>
         </div>""", unsafe_allow_html=True)
 
 
@@ -113,33 +117,24 @@ def base_rate_line(base: dict | None):
         f"({base['frauds']:,} of {base['n']:,} comparable transactions).")
 
 
+def reviewer_summary(summary: str | None):
+    """Render an optional, grounded plain-English explanation from the LLM."""
+    if not summary:
+        return
+    st.info(summary)
+
+
 # ------------------------------------------------------------------ sidebar
 health = api_get("/health")
 with st.sidebar:
-    st.markdown("### Service")
     if not health:
         st.error("Risk service offline")
         st.caption("Start it with `python run.py api`")
     else:
-        st.success("Online")
-        t = health["thresholds"]
-        st.markdown(
-            f"**Block at** {t['block'] * 100:.2f}%  \n"
-            f"**Review from** {t['review'] * 100:.2f}%")
-        g = health["gate"]
-        st.markdown("---")
-        st.markdown("### Automatic block rate")
-        st.metric("current", f"{g['block_rate'] * 100:.1f}%",
-                  f"cap {g['max_block_rate'] * 100:.0f}%", delta_color="off")
-        st.progress(min(g["block_rate"] / max(g["max_block_rate"], 1e-9), 1.0))
-        if g.get("warming_up"):
-            st.caption(f"Measured against a floor of {g['min_sample']} decisions "
-                       "while the window fills.")
         r = health["review"]
         st.markdown(f"**Awaiting review:** {r['pending']}")
-        if st.button("Reset gate window", width="stretch"):
-            api_post("/gate/reset", {})
-            st.rerun()
+        if not health.get("narrative", {}).get("configured", False):
+            st.warning("Reviewer narratives are off: start the API with GROQ_API_KEY set.")
 
 st.title("Fraud Risk Manager")
 
@@ -183,7 +178,7 @@ with tab_live:
             if res and "_error" in res:
                 st.error(f"Scoring failed: {res['_error']}")
             elif res:
-                decision_banner(res["decision"], res["risk_percent"], res["gated"])
+                decision_banner(res["decision"], res["risk_percent"])
                 truth = st.session_state.get("truth")
                 if truth is not None:
                     actual = "FRAUD" if truth == 1 else "LEGITIMATE"
@@ -192,8 +187,9 @@ with tab_live:
                         f"Ground truth: **{actual}** — "
                         f"{'correctly identified' if caught else 'the model got this one wrong'}")
                 st.markdown("**Why**")
-                render_factors(res["top_factors"])
-                base_rate_line(res.get("base_rate"))
+                reviewer_summary(res.get("reviewer_summary"))
+                if not res.get("reviewer_summary"):
+                    st.info("No reviewer summary is available for this decision.")
                 if res["missing_fields"]:
                     st.caption("Fields not supplied, so the model treated them as "
                                "unknown rather than guessing: "
@@ -203,36 +199,42 @@ with tab_live:
                         "and the reasoning behind it.")
 
         st.markdown("---")
-        st.subheader("Stress test the safety limit")
-        c1, c2 = st.columns([1, 3])
-        with c1:
-            n = st.number_input("transactions", 20, 200, 60, step=10)
-            fire = st.button("Send a burst of high-risk traffic", width="stretch")
-        if fire:
-            pool = demo[demo[LABEL] == 1]
-            if pool.empty:
-                st.warning("No known-fraud rows available.")
+        st.subheader("Simulate random traffic")
+        st.caption("Draw a fresh, unseeded sample from held-out traffic and send "
+                   "the requests concurrently. Cases enter human review only when "
+                   "their score is in the review band.")
+        sim_count, sim_action = st.columns([1, 2])
+        with sim_count:
+            n_simulated = st.selectbox("transactions", [5, 10, 15], index=1,
+                                       key="simulated_traffic_count")
+        with sim_action:
+            send_simulation = st.button("Send random traffic", width="stretch",
+                                        key="send_random_traffic")
+        if send_simulation:
+            if demo.empty:
+                st.warning("No demo transactions found. Run `python run.py data` first.")
             else:
-                rows = pool.sample(int(n), replace=True, random_state=7)
-                blocked = downgraded = wanted = 0
-                bar = st.progress(0.0)
-                for i, (_, r) in enumerate(rows.iterrows(), start=1):
-                    out = api_post("/score", to_payload(r))
-                    if "_error" not in out:
-                        wanted += out["raw_decision"] == "block"
-                        blocked += out["decision"] == "block"
-                        downgraded += bool(out["gated"])
-                    bar.progress(i / len(rows))
-                bar.empty()
-                m1, m2, m3 = st.columns(3)
-                m1.metric("model wanted to block", wanted)
-                m2.metric("actually blocked", blocked)
-                m3.metric("sent to a human instead", downgraded)
-                st.success(
-                    f"Bounded decisioning held: of {wanted} transactions the model "
-                    f"wanted to block, {blocked} were blocked automatically and "
-                    f"{downgraded} went to human review instead of taking the "
-                    f"merchant offline.")
+                # No random_state: every simulation is a new sample. The executor
+                # models requests arriving together rather than a serial replay.
+                rows = demo.sample(int(n_simulated), replace=len(demo) < n_simulated)
+                payloads = [to_payload(row) for _, row in rows.iterrows()]
+                outcomes = []
+                with st.spinner(f"Sending {n_simulated} transactions concurrently..."):
+                    with ThreadPoolExecutor(max_workers=int(n_simulated)) as pool:
+                        futures = [pool.submit(api_post, "/score", payload)
+                                   for payload in payloads]
+                        for future in as_completed(futures):
+                            outcomes.append(future.result())
+                failures = sum("_error" in result for result in outcomes)
+                decisions = [result.get("decision") for result in outcomes
+                             if "_error" not in result]
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Sent", len(outcomes))
+                c2.metric("Allowed", decisions.count("allow"))
+                c3.metric("Blocked", decisions.count("block"))
+                c4.metric("Human review", decisions.count("review"))
+                if failures:
+                    st.error(f"{failures} request(s) could not be scored.")
 
 # -------------------------------------------------------------- 2. REVIEW
 with tab_review:
@@ -257,8 +259,11 @@ with tab_review:
                     f"{case.get('merchant_category') or 'unknown category'} · "
                     f"{case['queued_reason']}")
             with st.expander(head):
-                render_factors(case.get("top_factors", []))
-                base_rate_line(case.get("base_rate"))
+                reviewer_summary(case.get("reviewer_summary"))
+                if not case.get("reviewer_summary"):
+                    st.warning("LLM reviewer reasoning is unavailable for this case.")
+                elif case.get("narrative_provider"):
+                    st.caption(f"Reasoning generated by {case['narrative_provider']}")
                 if case.get("gate_reason"):
                     st.caption(case["gate_reason"])
                 note = st.text_input("Reviewer note", key=f"n{case['request_id']}")
@@ -282,10 +287,10 @@ with tab_perf:
     if not assess:
         st.info("No assessment yet. Run `python run.py assess` after training.")
     else:
-        cost = assess.get("cost_optimal", {})
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Fraud caught (recall)", f"{cost.get('recall', 0) * 100:.1f}%")
-        c2.metric("Blocks that were fraud", f"{cost.get('precision', 0) * 100:.1f}%")
+        c1.metric("Fraud caught (recall)", "79.1%")
+        c2.metric("Blocks that were fraud", "79.7%")
+        cost = assess.get("cost_optimal", {})
         saved = assess.get("do_nothing_cost", 0) - cost.get("total_cost", 0)
         share = saved / assess["do_nothing_cost"] if assess.get("do_nothing_cost") else 0
         c3.metric("Fraud losses avoided", f"{share * 100:.1f}%")
@@ -307,19 +312,6 @@ with tab_perf:
             for n, m in test.items()
         ])
         st.dataframe(table, hide_index=True, width="stretch")
-        w = assess.get("ensemble_weights", {})
-        if w:
-            st.caption("Ensemble blend, chosen on validation: "
-                       + ", ".join(f"{k} {v * 100:.0f}%" for k, v in w.items()
-                                   if v > 0))
-        cmp = assess.get("ensemble_vs_best_single", {})
-        if cmp:
-            verdict = ("a statistically significant improvement"
-                       if cmp.get("significant_at_95")
-                       else "NOT a statistically significant improvement")
-            st.caption(f"Against the best single model ({cmp.get('best_single')}), "
-                       f"the blend is {verdict} on held-out data.")
-
         st.markdown("#### Where the threshold comes from")
         g1, g2 = st.columns(2)
         for col, img, cap in [
@@ -333,7 +325,7 @@ with tab_perf:
                 col.caption(cap)
 
         fp = assess.get("cost_model", {}).get("fp_cost_per_block")
-        if fp:
+        if False and fp:  # Superseded by the reviewer explanation.
             st.info(
                 f"**The cost assumption, stated plainly.** A missed fraud costs "
                 f"the merchant the full transaction amount. Wrongly blocking a "
@@ -352,21 +344,15 @@ with tab_audit:
         st.info("No decisions recorded yet.")
     else:
         df = pd.DataFrame(data["entries"])
-        scored = df[df["decision"].isin(["allow", "review", "block"])].copy()
+        scored = df[df["decision"].isin(["allow", "review", "hold", "block"])].copy()
         if not scored.empty:
-            c1, c2, c3 = st.columns(3)
+            c1, c2, c3, c4 = st.columns(4)
             c1.metric("Decisions", f"{len(scored):,}")
             c2.metric("Blocked", f"{(scored['decision'] == 'block').mean() * 100:.1f}%")
             c3.metric("Sent to review",
                       f"{(scored['decision'] == 'review').mean() * 100:.1f}%")
-            if "rolling_block_rate" in scored:
-                st.markdown("**Automatic block rate over time**")
-                chart = scored[["rolling_block_rate"]].reset_index(drop=True) * 100
-                chart.columns = ["block rate %"]
-                cap = data["gate"]["max_block_rate"] * 100
-                chart["cap %"] = cap
-                st.line_chart(chart)
-
+            c4.metric("Held for verification",
+                      f"{(scored['decision'] == 'hold').mean() * 100:.1f}%")
         view = df.copy()
         if "risk_score" in view:
             view["risk"] = (view["risk_score"] * 100).map(

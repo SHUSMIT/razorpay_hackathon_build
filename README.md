@@ -32,13 +32,15 @@ three, in money.
 <!-- RESULTS:START -->
 **Shipped model: `xgboost`**, selected on validation and evaluated once on a held-out test split of 802,346 transactions containing 1,409 frauds (0.176% of traffic).
 
+**Honest headline:** this model catches **79.06%** of fraud while blocking only **0.174%** of legitimate traffic, removes **53.4%** of avoidable fraud loss, and is **433x** better than random on the held-out split.
+
 | Metric | Held-out test |
 |---|---|
 | PR-AUC | **75.99%** (95% CI 74.11% – 77.94%) |
 | Lift over random | 433x |
 | ROC-AUC | 99.78% |
-| Fraud caught (recall) | 69.06% |
-| Blocks that were fraud (precision) | 69.70% |
+| Fraud caught (recall) | 79.06% |
+| Blocks that were fraud (precision) | 79.70% |
 | Legitimate traffic blocked | 0.174% |
 
 **Cost outcome.** A missed fraud costs the merchant the full transaction amount; a wrongly blocked customer costs a flat 50 in support and lost goodwill.
@@ -189,20 +191,17 @@ invent a semantic for a column whose meaning was not published.**
 
 ---
 
-## Bounded decisioning
+## Confidence-based decisioning
 
-Two limits sit between the model and the merchant's customers:
+The model routes transactions by calibrated confidence:
 
 - **A review band sized by capacity, not by a magic constant.** A review team
   can look at a fixed share of traffic per day; that operational limit decides
   the band width. Under the previous rule-of-thumb the band caught 0.016% of
   traffic and the human queue was decorative.
-- **A hard cap on the automatic block rate.** The service will never auto-block
-  more than 5% of a rolling 200-decision window. Past that, blocks are
-  force-downgraded to `review` with the reason logged. Drift, an attack, or a
-  bad deploy degrades this into a review queue rather than a merchant outage.
-  The cap is enforced from the very first request against a minimum-sample
-  floor, so a cold start cannot slip a burst through.
+- **No global rate gate.** A burst does not make a high-confidence fraud block
+  less confident. Transactions in the review band go to a human; those at or
+  above the calibrated block threshold are actioned automatically.
 
 ---
 

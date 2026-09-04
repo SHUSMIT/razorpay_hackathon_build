@@ -11,11 +11,9 @@ Four things make this more than a model behind HTTP:
      models, the blend weights and the calibrator never touched. The review
      band beneath it is sized by how much traffic a human team can actually
      look at, not by a magic constant.
-  2. THE BLOCK RATE IS GATED. The service will never auto-block more than
-     MAX_BLOCK_RATE of a rolling window. If a burst would push it over, block
-     decisions are force-downgraded to `review` and the downgrade is logged
-     with its reason. Drift, an attack or a bad deploy degrades this into a
-     review queue rather than a merchant outage.
+  2. HUMAN REVIEW IS CONFIDENCE-BASED. Only transactions in the calibrated
+     review band are sent to a reviewer; confident blocks are actioned
+     automatically, even during a burst.
   3. EVERY DECISION IS EXPLAINED IN HUMAN TERMS. The features are named, so a
      reviewer is told "merchant category: Cruise Lines - 67% of transactions in
      this group were fraud, against 0.16% overall" rather than being handed a
@@ -35,13 +33,13 @@ import os
 import threading
 import time
 import uuid
-from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
 import numpy as np
 import pandas as pd
+import requests
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -50,11 +48,8 @@ from pydantic import BaseModel, Field, field_validator
 from src.calibration import Calibration
 from src.config import (
     AUDIT_LOG,
-    GATE_MIN_SAMPLE,
-    MAX_BLOCK_RATE,
     MODELS,
     REVIEW_QUEUE,
-    ROLLING_WINDOW,
     SERVING_CONFIG,
 )
 from src.context import FeatureContext
@@ -62,7 +57,21 @@ from src.models import ensemble_predict, load, predict
 from src.schema import CATEGORICAL, FEATURES, label
 from src.serve_features import ServingFeaturizer
 
-Decision = Literal["allow", "review", "block"]
+
+def _load_local_env() -> None:
+    """Load this project's local key without overwriting real process settings."""
+    env_file = Path(__file__).resolve().parents[1] / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        if line.startswith("GROQ_API_KEY=") and not os.environ.get("GROQ_API_KEY"):
+            os.environ["GROQ_API_KEY"] = line.split("=", 1)[1].strip().strip('"')
+            return
+
+
+_load_local_env()
+
+Decision = Literal["allow", "review", "hold", "block"]
 DEFAULT_MODEL_VERSION = "frm-1.0.0"
 
 
@@ -117,6 +126,8 @@ class ScoreResponse(BaseModel):
     missing_fields: list[str]
     latency_ms: float
     base_rate: dict | None = None
+    reviewer_summary: str | None = None
+    narrative_provider: str | None = None
 
 
 class ReviewResolution(BaseModel):
@@ -126,86 +137,81 @@ class ReviewResolution(BaseModel):
     note: str = Field("", max_length=500)
 
 
-# ------------------------------------------------------------------ gate state
-class BlockRateGate:
-    """Rolling-window cap on the automatic block rate."""
+class GroqNarrator:
+    """Optional, grounded reviewer narrative. It never changes a decision."""
 
-    def __init__(self, window: int = ROLLING_WINDOW, max_rate: float = MAX_BLOCK_RATE,
-                 min_sample: int = GATE_MIN_SAMPLE):
-        self.window, self.max_rate, self.min_sample = window, max_rate, min_sample
-        self.recent: deque[int] = deque(maxlen=window)
-        self.lock = threading.Lock()
+    models = ("openai/gpt-oss-20b",)
+    endpoint = "https://api.groq.com/openai/v1/chat/completions"
 
-    def current_rate(self) -> float:
-        """Raw observed rate over the decisions actually seen."""
-        return (sum(self.recent) / len(self.recent)) if self.recent else 0.0
+    def __init__(self):
+        self.api_key = os.environ.get("GROQ_API_KEY")
 
-    def enforced_rate(self) -> float:
-        """The rate the gate compares against the cap.
+    @property
+    def enabled(self) -> bool:
+        return bool(self.api_key)
 
-        Same denominator as `admit`: max(observed, min_sample). Reporting the
-        raw rate is misleading on a cold window -- three decisions of which one
-        is a block reads as "33% against a 5% cap", which looks like the safety
-        system has failed when it is in fact holding at 1/20 = 5%.
-        """
-        if not self.recent:
-            return 0.0
-        return sum(self.recent) / max(len(self.recent), self.min_sample)
-
-    def admit(self, wants_block: bool) -> tuple[bool, str | None]:
-        """Decide whether a block is allowed through. Returns (allowed, reason).
-
-        The rate is measured against max(observed, min_sample) decisions, not
-        the observed count alone. If a short window were exempt, a cold service
-        could auto-block its first `min_sample` requests outright and blow
-        straight through the bound -- precisely the burst the gate exists to
-        survive. With the floor in place the first block still goes through
-        (1 in an assumed 20 is exactly the 5% cap), so genuine fraud is never
-        ignored at startup, but the second in a row is already held.
-        """
-        with self.lock:
-            if not wants_block:
-                self.recent.append(0)
-                return True, None
-
-            denominator = max(len(self.recent) + 1, self.min_sample)
-            prospective = (sum(self.recent) + 1) / denominator
-            if prospective > self.max_rate:
-                self.recent.append(0)  # downgraded: not counted as a block
-                return False, (
-                    f"block-rate gate: allowing this block would put the rolling "
-                    f"block rate at {prospective:.1%} over the last {denominator} "
-                    f"decisions, above the {self.max_rate:.1%} cap. "
-                    f"Downgraded to review."
+    def explain(self, raw: dict, score: float, decision: str,
+                factors: list[dict], base_rate: dict | None) -> tuple[str | None, str | None]:
+        if not self.enabled:
+            return None, None
+        evidence = [{
+            "signal": item.get("label"), "direction": item.get("direction"),
+            "evidence": item.get("evidence"),
+        } for item in factors]
+        model_result = {"decision": decision}
+        if decision != "review":
+            model_result["risk_score"] = round(score, 4)
+        prompt = {
+            "transaction": raw,
+            "model_result": model_result,
+            "measured_evidence": evidence,
+            "score_band_history": base_rate,
+        }
+        system = (
+            "You are a payment-risk reviewer. Write a clear, grounded explanation "
+            "for an operator in 3 short sentences (at most 110 words). Sentence 1 "
+            "must state the supplied prediction only. Sentence 2 must name the two "
+            "strongest risk-increasing facts and explain their combined relevance. "
+            "Sentence 3 must name any supplied counter-evidence and say what a human "
+            "should verify. Use only the transaction and measured evidence provided; "
+            "never invent facts, claim certainty, give fraud-evasion advice, or alter "
+            "the decision. If the decision is review, say it was flagged for human "
+            "review and never state a numeric score, confidence, or recommendation."
+        )
+        for model in self.models:
+            try:
+                response = requests.post(
+                    self.endpoint,
+                    headers={"Authorization": f"Bearer {self.api_key}",
+                             "Content-Type": "application/json"},
+                    json={"model": model,
+                          "messages": [{"role": "system", "content": system},
+                                       {"role": "user", "content": json.dumps(prompt, default=str)}],
+                          "temperature": 0.2, "reasoning_effort": "low",
+                          "max_completion_tokens": 500},
+                    timeout=20,
                 )
-            self.recent.append(1)
-            return True, None
-
-    def snapshot(self) -> dict:
-        with self.lock:
-            enforced = (sum(self.recent) / max(len(self.recent), self.min_sample)
-                        if self.recent else 0.0)
-            observed = (sum(self.recent) / len(self.recent)) if self.recent else 0.0
-            return {"window_size": len(self.recent), "max_window": self.window,
-                    "block_rate": enforced, "observed_rate": observed,
-                    "blocks_in_window": int(sum(self.recent)),
-                    "max_block_rate": self.max_rate, "min_sample": self.min_sample,
-                    "warming_up": len(self.recent) < self.min_sample,
-                    "headroom": max(self.max_rate - enforced, 0.0)}
-
-    def reset(self) -> None:
-        with self.lock:
-            self.recent.clear()
+                response.raise_for_status()
+                message = response.json()["choices"][0]["message"]
+                text = (message.get("content") or "").strip()
+                if text:
+                    return text[:1_200], model
+                print(f"[api] LLM narrative empty: {model}")
+            except requests.HTTPError:
+                print(f"[api] LLM narrative failed: {model} HTTP {response.status_code}")
+            except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
+                print(f"[api] LLM narrative failed: {model} {type(exc).__name__}")
+        return None, None
 
 
 # -------------------------------------------------------------- review queue
 class ReviewQueue:
     """Append-only human-review queue.
 
-    Anything banded `review`, and anything the gate downgraded, lands here. A
-    reviewer approves or declines it and that resolution is appended too, so the
-    file is a replayable history rather than mutable state. Pending items are
-    rebuilt from it on startup.
+    Both score-band reviews and gate-overflow reviews land here. There must not
+    be a second, invisible "verification" register when a human has the final
+    disposition. A review resolution is appended, and pending items are rebuilt
+    on startup.
 
     We store what a human needs to judge the case -- score, amount, the ranked
     factors with their evidence -- and a hash of the input, never the raw record.
@@ -218,17 +224,22 @@ class ReviewQueue:
         self._replay()
 
     def _replay(self) -> None:
-        if not self.path.exists():
-            return
-        for line in self.path.read_text(encoding="utf-8").splitlines():
+        if self.path.exists():
+            lines = self.path.read_text(encoding="utf-8").splitlines()
+        else:
+            lines = []
+        for line in lines:
             try:
                 e = json.loads(line)
             except json.JSONDecodeError:
                 continue
             if e.get("event") == "queued":
+                if e.get("queued_reason") == "gate downgrade":
+                    e["queued_reason"] = "legacy gate review"
                 self.pending[e["request_id"]] = e
             elif e.get("event") == "resolved":
                 self.pending.pop(e.get("request_id"), None)
+
         if self.pending:
             print(f"[api] review queue: {len(self.pending)} pending case(s) replayed")
 
@@ -300,15 +311,14 @@ class RiskService:
         self.context = FeatureContext.load()
         self.featurizer = ServingFeaturizer()
         self.explainer_name = self._pick_explainer()
+        self.narrator = GroqNarrator()
 
         self.audit_lock = threading.Lock()
-        self.gate = BlockRateGate()
         self.review_queue = ReviewQueue()
 
         print(f"[api] ready. serving={self.shipped} explained_by={self.explainer_name} "
               f"block>={self.block_threshold:.4f} review>={self.review_threshold:.4f} "
-              f"calibrator={self.calibrator.method} "
-              f"gate<={MAX_BLOCK_RATE:.0%} over {ROLLING_WINDOW}")
+              f"calibrator={self.calibrator.method}")
 
     # ------------------------------------------------------------- loading
     @staticmethod
@@ -367,7 +377,7 @@ class RiskService:
             print(f"[api] WARNING: SHAP failed ({exc}); returning no factors")
             return None
 
-    def top_factors(self, X: pd.DataFrame, k: int = 4) -> list[dict]:
+    def top_factors(self, X: pd.DataFrame, k: int = 6) -> list[dict]:
         contribs = self._shap(X)
         if contribs is None:
             return []
@@ -432,11 +442,12 @@ class RiskService:
         score = float(self.calibrator.predict(np.array([uncalibrated]))[0])
         factors = self.top_factors(X)
 
-        raw_decision, rule_id = self.band(score)
-        allowed, gate_reason = self.gate.admit(raw_decision == "block")
-        decision: Decision = raw_decision
-        if raw_decision == "block" and not allowed:
-            decision, rule_id = "review", "RULE_GATE_DOWNGRADE_BLOCK_TO_REVIEW"
+        decision, rule_id = self.band(score)
+        raw_decision = decision
+
+        base_rate = self.context.band_fraud_rate(score)
+        summary, narrative_model = self.narrator.explain(
+            raw, score, decision, factors, base_rate)
 
         resp = ScoreResponse(
             request_id=str(uuid.uuid4()),
@@ -444,8 +455,8 @@ class RiskService:
             risk_percent=f"{score * 100:.2f}%",
             decision=decision,
             raw_decision=raw_decision,
-            gated=decision != raw_decision,
-            gate_reason=gate_reason,
+            gated=False,
+            gate_reason=None,
             top_factors=factors,
             rule_id=rule_id,
             thresholds={"review": self.review_threshold,
@@ -455,7 +466,9 @@ class RiskService:
             explained_by=self.explainer_name,
             missing_fields=missing,
             latency_ms=round((time.perf_counter() - t0) * 1000, 3),
-            base_rate=self.context.band_fraud_rate(score),
+            base_rate=base_rate,
+            reviewer_summary=summary,
+            narrative_provider=(f"Groq / {narrative_model}" if narrative_model else None),
         )
         self._audit(resp, raw)
         if resp.decision == "review":
@@ -487,7 +500,6 @@ class RiskService:
             "calibrator": self.calibrator.method,
             "top_factors": [f["feature"] for f in resp.top_factors],
             "missing_fields": resp.missing_fields,
-            "rolling_block_rate": round(self.gate.enforced_rate(), 4),
             "latency_ms": resp.latency_ms,
         }
         with self.audit_lock:
@@ -503,24 +515,24 @@ class RiskService:
             "risk_percent": resp.risk_percent,
             "amount": float(raw.get("amount", 0.0) or 0.0),
             "merchant_category": raw.get("mcc_category"),
-            "queued_reason": ("gate downgrade" if resp.gated
-                              else "score in review band"),
+            "queued_reason": "score in review band",
             "gate_reason": resp.gate_reason,
             "rule_id": resp.rule_id,
             "thresholds": resp.thresholds,
             "model_version": resp.model_version,
             "top_factors": resp.top_factors,
             "base_rate": resp.base_rate,
+            "reviewer_summary": resp.reviewer_summary,
+            "narrative_provider": resp.narrative_provider,
             "missing_fields": resp.missing_fields,
         })
-
 
 # ----------------------------------------------------------------- app wiring
 app = FastAPI(
     title="Fraud Risk Manager",
     version=DEFAULT_MODEL_VERSION,
     description="Defense-only merchant transaction risk scoring with bounded, "
-                "gated decisioning, human review and an append-only audit trail.",
+                "confidence-based human review and an append-only audit trail.",
 )
 _service: RiskService | None = None
 
@@ -576,8 +588,9 @@ def health() -> dict:
             "ensemble_weights": s.weights,
             "thresholds": {"review": s.review_threshold, "block": s.block_threshold},
             "calibrator": s.calibrator.method,
-            "gate": s.gate.snapshot(),
             "review": s.review_queue.stats(),
+            "narrative": {"configured": s.narrator.enabled,
+                          "models": list(s.narrator.models)},
             "context": {"available": s.context.available,
                         "reference_rows": s.context.n_reference,
                         "overall_fraud_rate": s.context.overall_rate}}
@@ -593,18 +606,6 @@ def score(txn: Transaction) -> ScoreResponse:
         raise HTTPException(status_code=500, detail=f"scoring failed: {exc}") from exc
 
 
-@app.get("/gate")
-def gate_status() -> dict:
-    return get_service().gate.snapshot()
-
-
-@app.post("/gate/reset")
-def gate_reset() -> dict:
-    """Demo convenience: clear the rolling window between takes."""
-    get_service().gate.reset()
-    return {"status": "gate window cleared"}
-
-
 @app.get("/review/queue")
 def review_queue(n: int = 50) -> dict:
     svc = get_service()
@@ -618,8 +619,7 @@ def review_queue(n: int = 50) -> dict:
 def review_resolve(res: ReviewResolution) -> dict:
     """A human approves or declines a queued case.
 
-    The resolution is appended to the review log AND to the audit trail, so the
-    final disposition of every gated decision is recoverable.
+    The resolution is appended to the review log AND to the audit trail.
     """
     svc = get_service()
     try:
@@ -657,8 +657,7 @@ def audit(n: int = 50) -> dict:
             entries.append(json.loads(line))
         except json.JSONDecodeError:
             continue
-    return {"entries": entries, "total": len(lines),
-            "gate": get_service().gate.snapshot()}
+    return {"entries": entries, "total": len(lines)}
 
 
 if __name__ == "__main__":

@@ -56,6 +56,12 @@ def build_block() -> str:
                  f"{a.get('test_rows', 0):,} transactions containing "
                  f"{a.get('test_frauds', 0):,} frauds "
                  f"({pct(base, 3)} of traffic).\n")
+    lines.append(f"**Honest headline:** this model catches "
+                 f"**{pct(cost.get('recall'))}** of fraud while blocking only "
+                 f"**{pct(cost.get('block_rate'), 3)}** of legitimate traffic, "
+                 f"removes **{pct(saved / nothing if nothing else 0, 1)}** of "
+                 f"avoidable fraud loss, and is **{m.get('pr_auc', 0) / max(base, 1e-12):,.0f}x** "
+                 f"better than random on the held-out split.\n")
 
     lines.append("| Metric | Held-out test |")
     lines.append("|---|---|")
