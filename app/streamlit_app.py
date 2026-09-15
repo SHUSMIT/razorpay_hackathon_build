@@ -357,11 +357,10 @@ with tab_audit:
         if "risk_score" in view:
             view["risk"] = (view["risk_score"] * 100).map(
                 lambda v: f"{v:.2f}%" if v == v else "")
-        cols = [c for c in ["ts", "risk", "decision", "amount", "gated",
-                            "rule_id"] if c in view]
+        cols = [c for c in ["ts", "risk", "decision", "amount"] if c in view]
         view = view[cols].rename(columns={
             "ts": "when", "decision": "outcome", "amount": "amount",
-            "gated": "gate acted", "rule_id": "rule"})
+        })
         st.dataframe(view.tail(200).iloc[::-1], hide_index=True, width="stretch")
         st.caption("Append-only. Inputs are stored as a hash, never as raw "
                    "transaction data.")
